@@ -1,0 +1,15 @@
+Analyzing DukeIgnite Flutter...                                 
+
+   info - Parameter 'key' could be a super parameter - lib\main.dart:18:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\screens\dashboard_screen.dart:10:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:114:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:115:45 - deprecated_member_use
+   info - Unnecessary use of string interpolation - lib\screens\dashboard_screen.dart:129:21 - unnecessary_string_interpolations
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:186:55 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\screens\scan_screen.dart:11:9 - use_super_parameters
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:41:7 - avoid_print
+  error - The named parameter 'license' is required, but there's no corresponding argument - lib\services\ble_service.dart:52:20 - missing_required_argument
+warning - The value of the local variable 'state' isn't used - lib\services\ble_service.dart:56:25 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:86:7 - avoid_print
+  error - The name 'MyApp' isn't a class - test\widget_test.dart:16:35 - creation_with_non_type
+

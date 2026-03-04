@@ -1,52 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'app_services.dart';
 import 'models/sensor_data.dart';
 import 'screens/scan_screen.dart';
 import 'services/ble_service.dart';
 
-import 'services/mock_ble_service.dart';
-
-const bool useMock = false; // Set to false for real hardware
-
 void main() {
+  // The SensorData is created once and provided to the entire app.
+  final sensorData = SensorData();
+  
+  // The BleService is determined by the getBleService function and provided.
+  final bleService = getBleService(sensorData);
+
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => SensorData())],
+      providers: [
+        ChangeNotifierProvider.value(value: sensorData),
+        Provider<BleService>.value(value: bleService),
+      ],
       child: const FormaldehydeApp(),
     ),
   );
 }
 
-class FormaldehydeApp extends StatefulWidget {
+class FormaldehydeApp extends StatelessWidget {
   const FormaldehydeApp({super.key});
-
-  @override
-  State<FormaldehydeApp> createState() => _FormaldehydeAppState();
-}
-
-class _FormaldehydeAppState extends State<FormaldehydeApp> {
-  late BleService _bleService;
-  bool _initialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      final sensorData = Provider.of<SensorData>(context, listen: false);
-      if (useMock) {
-        _bleService = MockBleService(sensorData);
-      } else {
-        _bleService = RealBleService(sensorData);
-      }
-      _initialized = true;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +36,9 @@ class _FormaldehydeAppState extends State<FormaldehydeApp> {
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.black,
-        fontFamily: 'Inter', // Assuming Inter if added, else system default
+        fontFamily: 'Inter', 
       ),
-      home: ScanScreen(bleService: _bleService),
+      home: const ScanScreen(),
     );
   }
 }

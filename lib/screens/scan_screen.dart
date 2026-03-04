@@ -7,9 +7,7 @@ import '../services/ble_service.dart';
 import 'dashboard_screen.dart';
 
 class ScanScreen extends StatefulWidget {
-  final BleService bleService;
-
-  const ScanScreen({super.key, required this.bleService});
+  const ScanScreen({super.key});
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -19,12 +17,17 @@ class _ScanScreenState extends State<ScanScreen> {
   bool _isScanning = false;
   String _statusMessage = 'Ready to scan for Formaldehyde Sensor';
   SensorData? _sensorData;
+  BleService? _bleService;
+  
+  // TODO: Update this version number to match pubspec.yaml
+  final String _version = '1.0.0+1';
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_sensorData == null) {
       _sensorData = Provider.of<SensorData>(context, listen: false);
+      _bleService = Provider.of<BleService>(context, listen: false);
       _sensorData!.addListener(_onConnectionChange);
     }
   }
@@ -40,20 +43,18 @@ class _ScanScreenState extends State<ScanScreen> {
     if (_sensorData!.isConnected) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => DashboardScreen(bleService: widget.bleService),
+          builder: (context) => const DashboardScreen(),
         ),
       );
     }
   }
 
   Future<void> _startScan() async {
-    bool canScan = false;
+    final bleService = _bleService;
+    if (bleService == null) return;
 
-    if (kIsWeb) {
-      // Browsers handle permissions automatically via the Web Bluetooth API
-      canScan = true;
-    } else {
-      Map<Permission, PermissionStatus> statuses = await [
+    if (!kIsWeb) {
+       Map<Permission, PermissionStatus> statuses = await [
         Permission.location,
         Permission.bluetoothScan,
         Permission.bluetoothConnect,
@@ -62,21 +63,20 @@ class _ScanScreenState extends State<ScanScreen> {
       if (statuses[Permission.location]!.isGranted &&
           (statuses[Permission.bluetoothScan]!.isGranted ||
               statuses[Permission.bluetoothScan]!.isRestricted)) {
-        canScan = true;
+        // All good
+      } else {
+        setState(() {
+          _statusMessage = 'Permissions not granted for BLE access.';
+        });
+        return;
       }
     }
 
-    if (canScan) {
-      setState(() {
-        _isScanning = true;
-        _statusMessage = 'Searching for Formaldehyde Sensor...';
-      });
-      widget.bleService.startScan();
-    } else {
-      setState(() {
-        _statusMessage = 'Permissions not granted needed for BLE access.';
-      });
-    }
+    setState(() {
+      _isScanning = true;
+      _statusMessage = 'Searching for Formaldehyde Sensor...';
+    });
+    bleService.startScan();
   }
 
   @override
@@ -124,6 +124,14 @@ class _ScanScreenState extends State<ScanScreen> {
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
               ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          'v.$_version',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ),
     );

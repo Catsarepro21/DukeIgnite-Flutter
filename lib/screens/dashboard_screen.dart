@@ -3,11 +3,10 @@ import 'package:provider/provider.dart';
 import '../models/sensor_data.dart';
 import '../services/ble_service.dart';
 import 'scan_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final BleService bleService;
-
-  const DashboardScreen({super.key, required this.bleService});
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -18,12 +17,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _passController = TextEditingController();
   bool _noPassword = false;
   SensorData? _sensorData;
+  BleService? _bleService;
+  String _version = '';
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_sensorData == null) {
       _sensorData = Provider.of<SensorData>(context, listen: false);
+      _bleService = Provider.of<BleService>(context, listen: false);
       _sensorData!.addListener(_onConnectionChange);
     }
   }
@@ -31,6 +33,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = info.version;
+    });
   }
 
   @override
@@ -46,13 +56,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!_sensorData!.isConnected) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => ScanScreen(bleService: widget.bleService),
+          builder: (context) => const ScanScreen(),
         ),
       );
     }
   }
 
   Future<void> _sendWifiCredentials() async {
+    final bleService = _bleService;
+    if (bleService == null) return;
     FocusScope.of(context).unfocus();
     final ssid = _ssidController.text.trim();
     final pass = _noPassword ? "" : _passController.text.trim();
@@ -70,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     try {
-      await widget.bleService.setWifiCredentials(ssid, pass);
+      await bleService.setWifiCredentials(ssid, pass);
 
       if (!mounted) return;
 
@@ -110,7 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.bluetooth_disabled, color: Colors.white),
             onPressed: () {
-              widget.bleService.disconnect();
+              _bleService?.disconnect();
             },
           ),
         ],
@@ -129,8 +141,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 boxShadow: [
                   BoxShadow(
                     color: isDanger
-                        ? Colors.redAccent.withOpacity(0.2)
-                        : Colors.blueAccent.withOpacity(0.1),
+                        ? Colors.redAccent.withAlpha(51)
+                        : Colors.blueAccent.withAlpha(26),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -201,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       activeTrackColor: Colors.blueAccent,
                       inactiveTrackColor: Colors.grey[800],
                       thumbColor: Colors.blueAccent,
-                      overlayColor: Colors.blueAccent.withOpacity(0.2),
+                      overlayColor: Colors.blueAccent.withAlpha(51),
                     ),
                     child: Slider(
                       value: sensorData.volume.toDouble(),
@@ -213,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         sensorData.updateVolume(val.toInt());
                       },
                       onChangeEnd: (val) {
-                        widget.bleService.setVolume(val.toInt());
+                        _bleService?.setVolume(val.toInt());
                       },
                     ),
                   ),
@@ -334,6 +346,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            Center(
+              child: Text(
+                'v.$_version',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ),
           ],

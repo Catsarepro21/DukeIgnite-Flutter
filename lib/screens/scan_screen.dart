@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../models/sensor_data.dart';
@@ -46,16 +47,26 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _startScan() async {
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.location,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
-    ].request();
+    bool canScan = false;
 
-    if (statuses[Permission.location]!.isGranted &&
-        (statuses[Permission.bluetoothScan]!.isGranted ||
-            statuses[Permission.bluetoothScan]!.isRestricted)) {
-      // restricted usually means older android
+    if (kIsWeb) {
+      // Browsers handle permissions automatically via the Web Bluetooth API
+      canScan = true;
+    } else {
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+      ].request();
+
+      if (statuses[Permission.location]!.isGranted &&
+          (statuses[Permission.bluetoothScan]!.isGranted ||
+              statuses[Permission.bluetoothScan]!.isRestricted)) {
+        canScan = true;
+      }
+    }
+
+    if (canScan) {
       setState(() {
         _isScanning = true;
         _statusMessage = 'Searching for Formaldehyde Sensor...';

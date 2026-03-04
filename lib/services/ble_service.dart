@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/sensor_data.dart';
 
@@ -33,6 +34,7 @@ class RealBleService implements BleService {
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   StreamSubscription<List<int>>? _ppmSubscription;
+  bool _isConnecting = false;
 
   RealBleService(this.sensorData);
 
@@ -49,10 +51,12 @@ class RealBleService implements BleService {
           BluetoothAdapterState.on) {
         await FlutterBluePlus.startScan(
           withServices: [Guid(SERVICE_UUID)],
+          webOptionalServices: [Guid(SERVICE_UUID)],
           timeout: const Duration(seconds: 15),
         );
 
         _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+          if (_isConnecting) return;
           for (ScanResult r in results) {
             String name = r.device.advName.isNotEmpty
                 ? r.device.advName
@@ -60,11 +64,10 @@ class RealBleService implements BleService {
                       ? r.device.platformName
                       : "Unknown");
 
-            print("Found device: $name (${r.device.remoteId})");
-
             if (name == "FormaldehydeSensor") {
               print("Match found! Connecting to $name...");
-              FlutterBluePlus.stopScan();
+              _isConnecting = true;
+              stopScan(); // Stops hardware scan AND cancels this subscription
               _connectToDevice(r.device);
               break;
             }
@@ -84,9 +87,22 @@ class RealBleService implements BleService {
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      await device.connect();
+      await device.connect(license: License.free);
+
+      // On Web, adding a small delay before discovery can help stability
+      if (kIsWeb) {
+        await Future.delayed(const Duration(milliseconds: 1000));
+      }
+
+      if (device.isDisconnected) {
+        print("Connection lost immediately after connect!");
+        _isConnecting = false;
+        return;
+      }
+
       sensorData.setDevice(device);
       sensorData.setConnectionStatus(true);
+      _isConnecting = false;
 
       // CustomDeviceState state = CustomDeviceState.disconnected;
       device.connectionState.listen((BluetoothConnectionState st) {
@@ -96,7 +112,19 @@ class RealBleService implements BleService {
         }
       });
 
-      List<BluetoothService> services = await device.discoverServices();
+      // Discovery retry logic for Web
+      List<BluetoothService> services;
+      try {
+        services = await device.discoverServices();
+      } catch (e) {
+        if (kIsWeb) {
+          print("Discovery failed, retrying in 1s...");
+          await Future.delayed(const Duration(seconds: 1));
+          services = await device.discoverServices();
+        } else {
+          rethrow;
+        }
+      }
       for (BluetoothService service in services) {
         String sUuid = service.uuid.toString().toUpperCase();
         if (sUuid.contains("FFFF")) {

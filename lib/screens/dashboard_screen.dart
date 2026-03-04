@@ -16,6 +16,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _ssidController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  bool _noPassword = false;
   SensorData? _sensorData;
 
   @override
@@ -54,12 +55,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _sendWifiCredentials() async {
     FocusScope.of(context).unfocus();
     final ssid = _ssidController.text.trim();
-    final pass = _passController.text.trim();
+    final pass = _noPassword ? "" : _passController.text.trim();
 
-    if (ssid.isEmpty || pass.isEmpty) {
+    if (ssid.isEmpty || (!_noPassword && pass.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter both SSID and Password'),
+          content: Text(
+            'Please enter SSID and Password (unless "No Password" is checked)',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -266,7 +269,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   TextField(
                     controller: _passController,
                     obscureText: true,
-                    style: const TextStyle(color: Colors.white),
+                    enabled: !_noPassword,
+                    style: TextStyle(
+                      color: _noPassword ? Colors.grey : Colors.white,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       labelStyle: const TextStyle(color: Colors.grey),
@@ -279,7 +285,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[850],
+                      fillColor: _noPassword
+                          ? Colors.black26
+                          : Colors.grey[850],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Theme(
+                    data: ThemeData(unselectedWidgetColor: Colors.grey),
+                    child: CheckboxListTile(
+                      title: const Text(
+                        'No Password',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      value: _noPassword,
+                      onChanged: (val) {
+                        setState(() {
+                          _noPassword = val ?? false;
+                          if (_noPassword) _passController.clear();
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      activeColor: Colors.blueAccent,
+                      checkColor: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),

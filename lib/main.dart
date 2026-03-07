@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:universal_ble/universal_ble.dart' hide BleService;
 import 'package:provider/provider.dart';
 
 import 'app_services.dart';
@@ -7,6 +8,13 @@ import 'screens/scan_screen.dart';
 import 'services/ble_service.dart';
 
 void main() {
+  // Must be called before any Flutter plugin or platform channel is used,
+  // including universal_ble's static initializer which sets up message handlers.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Increase BLE operation timeout globally — the default 10 s is too tight
+  // for discoverServices on slower peripherals (e.g. nRF Connect first connect).
+  UniversalBle.timeout = const Duration(seconds: 30);
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();
   

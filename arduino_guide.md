@@ -1,77 +1,131 @@
 # Arduino MKR 1010 BLE Guide
 
-This guide provides the necessary UUIDs and a sample Arduino sketch to make your hardware compatible with the Formaldehyde Monitor Flutter app.
+This guide provides the UUIDs and a sample Arduino sketch to make your hardware compatible with the Formaldehyde Monitor Flutter app.
 
-## 🔑 Your Final UUIDs
-Use these exact strings in your Arduino code to ensure the app can "see" and "talk" to the sensor.
+## 🔑 BLE UUIDs
 
-| Feature | UUID | Data Type | Notes |
+Use these exact strings in your Arduino code:
+
+| Feature | UUID | Direction | Notes |
 | :--- | :--- | :--- | :--- |
-| **Service** | `0000FFFF-0000-1000-8000-00805F9B34FB` | - | Custom Service |
-| **PPM** | `0000EEE1-0000-1000-8000-00805F9B34FB` | Float (4-byte) | Read/Notify |
-| **Volume** | `0000EEE2-0000-1000-8000-00805F9B34FB` | Uint8 (1-byte) | Write |
-| **SSID** | `0000EEE3-0000-1000-8000-00805F9B34FB` | String | Write |
-| **Password** | `0000EEE4-0000-1000-8000-00805F9B34FB` | String | Write |
+| **Service** | `0000FFFF-0000-1000-8000-00805F9B34FB` | — | Custom Service |
+| **PPM** | `0000EEE1-0000-1000-8000-00805F9B34FB` | Sensor → App (Notify) | 4-byte little-endian float |
+| **Command** | `0000EEE2-0000-1000-8000-00805F9B34FB` | App → Sensor (Write) | Packet-based, see below |
+
+> **Note:** The app was previously using 4 characteristics (volume, SSid, password, ppm).
+> These have been consolidated into **2 characteristics** (ppm + cmd) to keep the GATT table
+> minimal and reduce the number of writes.
+
+---
+
+## 📦 Command Characteristic Packet Format
+
+The app sends binary packets on the **Command** characteristic (`EEE2`).
+Read the first byte to determine the command:
+
+| Command | Byte 0 | Remaining bytes | Description |
+| :--- | :--- | :--- | :--- |
+| Set Volume | `0x01` | `[volume]` (0–100) | Set buzzer volume |
+| Set Wi-Fi | `0x02` | `[...ssidBytes, 0x00, ...passBytes]` | SSID + null separator + password |
+
+**Volume example:** `{0x01, 75}` → set volume to 75  
+**Wi-Fi example:** `{0x02, 'M','y','W','i','F','i', 0x00, 'p','a','s','s'}` → SSID=MyWiFi, pass=pass
 
 ---
 
 ## 🛠 Sample Arduino Sketch (ArduinoBLE)
-You will need to install the **ArduinoBLE** library from the Library Manager.
+
+Install the **ArduinoBLE** library from the Library Manager.
 
 ```cpp
 #include <ArduinoBLE.h>
 
-// Define UUIDs
+// UUIDs
 const char* serviceUuid = "0000FFFF-0000-1000-8000-00805F9B34FB";
 const char* ppmUuid     = "0000EEE1-0000-1000-8000-00805F9B34FB";
-const char* volumeUuid  = "0000EEE2-0000-1000-8000-00805F9B34FB";
+const char* cmdUuid     = "0000EEE2-0000-1000-8000-00805F9B34FB";
 
 BLEService sensorService(serviceUuid);
 
-// Float characteristic for PPM (Read + Notify)
+// PPM: 4-byte little-endian float, notified to the app
 BLEFloatCharacteristic ppmChar(ppmUuid, BLERead | BLENotify);
 
-// Unsigned Char for volume (Write)
-BLEUnsignedCharCharacteristic volumeChar(volumeUuid, BLEWrite);
+// Command: variable-length byte array written by the app
+BLECharacteristic cmdChar(cmdUuid, BLEWrite, 64 /*max bytes*/);
+
+int currentVolume = 50;
+String wifiSsid = "";
+String wifiPass = "";
+
+void handleCommand(const uint8_t* data, int len) {
+  if (len < 1) return;
+  uint8_t cmd = data[0];
+
+  if (cmd == 0x01 && len >= 2) {
+    // Set volume
+    currentVolume = data[1];
+    Serial.print("Volume set to: ");
+    Serial.println(currentVolume);
+
+  } else if (cmd == 0x02 && len >= 2) {
+    // Set Wi-Fi: find null separator
+    int sep = -1;
+    for (int i = 1; i < len; i++) {
+      if (data[i] == 0x00) { sep = i; break; }
+    }
+    if (sep > 0) {
+      wifiSsid = String((const char*)(data + 1)).substring(0, sep - 1);
+      wifiPass = (sep + 1 < len) ? String((const char*)(data + sep + 1)) : "";
+      Serial.print("WiFi SSID: "); Serial.println(wifiSsid);
+      Serial.print("WiFi Pass: "); Serial.println(wifiPass);
+      // TODO: call WiFi.begin(wifiSsid.c_str(), wifiPass.c_str());
+    }
+  }
+}
 
 void setup() {
   Serial.begin(9600);
   if (!BLE.begin()) {
+    Serial.println("BLE init failed!");
     while (1);
   }
 
-  BLE.setLocalName("FormaldehydeSensor"); // App searches for this exactly!
+  BLE.setLocalName("FormaldehydeSensor"); // Must match app exactly!
   BLE.setAdvertisedService(sensorService);
-
   sensorService.addCharacteristic(ppmChar);
-  sensorService.addCharacteristic(volumeChar);
+  sensorService.addCharacteristic(cmdChar);
   BLE.addService(sensorService);
 
-  ppmChar.writeValue(0.0);
-  volumeChar.writeValue(50);
-
+  ppmChar.writeValue(0.0f);
   BLE.advertise();
-  Serial.println("Sensor is advertising...");
+  Serial.println("Sensor advertising...");
 }
 
 void loop() {
   BLEDevice central = BLE.central();
-  if (central) {
-    while (central.connected()) {
-      float mockPpm = (float)random(0, 100) / 10.0;
-      ppmChar.writeValue(mockPpm);
-      
-      if (volumeChar.written()) {
-        int newVol = volumeChar.value();
-        Serial.print("New Volume: ");
-        Serial.println(newVol);
-      }
-      delay(2000);
+  if (!central) return;
+
+  Serial.print("Connected: ");
+  Serial.println(central.address());
+
+  while (central.connected()) {
+    // Replace with real sensor reading
+    float mockPpm = (float)random(0, 50) / 10.0f;
+    ppmChar.writeValue(mockPpm);
+
+    if (cmdChar.written()) {
+      handleCommand(cmdChar.value(), cmdChar.valueLength());
     }
+    delay(2000);
   }
+  Serial.println("Disconnected.");
 }
 ```
 
+---
+
 ## 💡 Troubleshooting
-*   **Device Name**: Ensure `BLE.setLocalName("FormaldehydeSensor");` is exactly as written, as the Flutter app uses this to find the device.
-*   **Data Types**: The app expects `PPM` to be a 4-byte float. In ArduinoBLE, use `BLEFloatCharacteristic`.
+
+- **Device Name**: `BLE.setLocalName("FormaldehydeSensor")` must match exactly — the app uses this to find the device.
+- **PPM Format**: The app expects a 4-byte little-endian IEEE 754 float. `BLEFloatCharacteristic` generates this automatically.
+- **Command length**: Max packet is 64 bytes (covers long SSIDs/passwords). Adjust if needed.

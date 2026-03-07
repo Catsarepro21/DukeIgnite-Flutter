@@ -1,7 +1,11 @@
+/// Abstract BLE service interface.
+///
+/// Implementations: [RealBleService] (Android/iOS) and
+/// [UnsupportedBleService] (Linux/Windows platforms).
 abstract class BleService {
   void startScan();
   void disconnect();
-  void dispose(); // Add dispose method for cleanup
+  void dispose();
   Future<void> setVolume(int volume);
   Future<void> setWifiCredentials(String ssid, String pass);
 }

@@ -30,6 +30,8 @@ const String cmdCharUuid = '0000EEE2-0000-1000-8000-00805F9B34FB';
 // Command byte identifiers
 const int _cmdVolume = 0x01;
 const int _cmdWifi = 0x02;
+const int _cmdThreshold = 0x03; // [0x03, low_byte, high_byte] = ppm uint16 LE
+const int _cmdContrast = 0x04;  // [0x04, contrast 0-100]
 
 // ---------------------------------------------------------------------------
 
@@ -170,6 +172,43 @@ class RealBleService implements BleService {
   }
 
   @override
+  Future<void> setPpmThreshold(double ppm) async {
+    if (!_isConnected || _device == null) {
+      debugPrint('[BLE] setPpmThreshold($ppm) skipped — not connected.');
+      return;
+    }
+    if (!_serviceReady) {
+      debugPrint('[BLE] setPpmThreshold($ppm) skipped — discovery not complete yet.');
+      return;
+    }
+    final clamped = ppm.clamp(0.0, 5.0);
+    // Encode as IEEE 754 float32 little-endian (same as sensor PPM readings).
+    final bytes = ByteData(4)..setFloat32(0, clamped, Endian.little);
+    final packet = Uint8List.fromList(
+      [_cmdThreshold, ...bytes.buffer.asUint8List()],
+    );
+    debugPrint('[BLE] setPpmThreshold($clamped) → $packet');
+    await _writeCommand(packet);
+  }
+
+  @override
+  Future<void> setLcdContrast(int contrast) async {
+    if (!_isConnected || _device == null) {
+      debugPrint('[BLE] setLcdContrast($contrast) skipped — not connected.');
+      return;
+    }
+    if (!_serviceReady) {
+      debugPrint('[BLE] setLcdContrast($contrast) skipped — discovery not complete yet.');
+      return;
+    }
+    final clamped = contrast.clamp(0, 100);
+    final packet = Uint8List.fromList([_cmdContrast, clamped]);
+    debugPrint('[BLE] setLcdContrast($clamped) → $packet');
+    await _writeCommand(packet);
+    sensorData.updateLcdContrast(clamped);
+  }
+
+  @override
   void dispose() {
     debugPrint('[BLE] dispose().');
     _cleanUp();
@@ -303,29 +342,30 @@ class RealBleService implements BleService {
 
   /// Writes [packet] to the command characteristic.
   ///
-  /// Attempt order:
-  ///   1. Write With Response (reliable, requires char to ACK)
-  ///   2. Write Without Response (fire-and-forget — more reliable for rapid
-  ///      sequential writes on nRF Connect; requires writeWithoutResponse
-  ///      property on the characteristic in the peripheral's GATT server)
-  ///   3. Re-discover services + retry Write With Response (fixes Chrome
-  ///      Web Bluetooth stale GATT handle issue)
+  /// Web Bluetooth (and WinRT) stale GATT handles after the first write.
+  /// Fix: always re-fetch the service + characteristic via [discoverServices]
+  /// before every write. Inelegant but reliable — the BLE stack needs coffee.
+  ///
+  /// Also waits 150 ms after each write so the stack can breathe between
+  /// rapid slider events.
   Future<bool> _writeCommand(Uint8List packet) async {
     final device = _device;
-    if (device == null) return false;
+    if (device == null || !_isConnected) return false;
 
-    // Attempt 1: Write With Response.
     try {
+      // Re-fetch service/characteristic handles before every write.
+      await UniversalBle.discoverServices(device.deviceId);
+
+      // Attempt 1: Write With Response.
       await UniversalBle.write(device.deviceId, serviceUuid, cmdCharUuid, packet);
       debugPrint('[BLE] Write OK.');
+      await Future<void>.delayed(const Duration(milliseconds: 150));
       return true;
     } catch (e) {
       debugPrint('[BLE] Write (with response) failed: $e — trying without response…');
     }
 
-    // Attempt 2: Write Without Response.
-    // Requires the characteristic to have the writeWithoutResponse property.
-    // nRF Connect: add "write,writeWithoutResponse" to EEE2's properties.
+    // Attempt 2: Write Without Response (for peripherals that support it).
     if (!_isConnected) return false;
     try {
       await UniversalBle.write(
@@ -333,24 +373,14 @@ class RealBleService implements BleService {
         withoutResponse: true,
       );
       debugPrint('[BLE] Write Without Response OK.');
-      return true;
-    } catch (e) {
-      debugPrint('[BLE] Write Without Response failed: $e — refreshing GATT handles…');
-    }
-
-    // Attempt 3: re-acquire fresh GATT handles (Chrome Web Bluetooth fix) + retry.
-    if (!_isConnected) return false;
-    try {
-      await UniversalBle.discoverServices(device.deviceId);
-      debugPrint('[BLE] GATT handles refreshed — retrying write…');
-      await UniversalBle.write(device.deviceId, serviceUuid, cmdCharUuid, packet);
-      debugPrint('[BLE] Write retry OK.');
+      await Future<void>.delayed(const Duration(milliseconds: 150));
       return true;
     } catch (e) {
       debugPrint('[BLE] All write attempts failed: $e');
       return false;
     }
   }
+
 
   void _cleanUp() {
     UniversalBle.stopScan().catchError((Object e) {

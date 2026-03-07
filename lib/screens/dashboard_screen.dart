@@ -106,11 +106,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  /// Returns a string representation of [ppm] with adaptive decimal precision
+  /// so small values (e.g. 0.037 ppm) are always readable.
+  String _formatPpm(double ppm) {
+    if (ppm < 0.01) return ppm.toStringAsFixed(4);
+    if (ppm < 0.1)  return ppm.toStringAsFixed(3);
+    if (ppm < 10.0) return ppm.toStringAsFixed(2);
+    return ppm.toStringAsFixed(1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final sensorData = Provider.of<SensorData>(context);
-    final isDanger =
-        sensorData.ppm >= 5.0; // Default alarm threshold on arduino
+    final isDanger = sensorData.ppm >= sensorData.ppmThreshold;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -156,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    sensorData.ppm.toStringAsFixed(2),
+                    _formatPpm(sensorData.ppm),
                     style: TextStyle(
                       fontSize: 64,
                       fontWeight: FontWeight.bold,
@@ -232,9 +240,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
-            // Wi-Fi Config Card
+            // PPM Threshold Control Card
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'PPM Alarm Threshold',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Icon(Icons.warning_amber_rounded,
+                          color: Colors.orangeAccent[100]),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Alarm above ${sensorData.ppmThreshold} ppm',
+                    style: const TextStyle(
+                        color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 10),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: Colors.orangeAccent,
+                      inactiveTrackColor: Colors.grey[800],
+                      thumbColor: Colors.orangeAccent,
+                      overlayColor: Colors.orangeAccent.withAlpha(51),
+                    ),
+                    child: Slider(
+                      value: sensorData.ppmThreshold,
+                      min: 0.0,
+                      max: 5.0,
+                      divisions: 100, // 0.05 ppm increments
+                      label: '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
+                      onChanged: (val) {
+                        sensorData.updatePpmThreshold(val);
+                      },
+                      onChangeEnd: (val) {
+                        _bleService?.setPpmThreshold(val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // LCD Contrast Control Card
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'LCD Contrast',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Icon(Icons.brightness_medium,
+                          color: Colors.purpleAccent[100]),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: Colors.purpleAccent,
+                      inactiveTrackColor: Colors.grey[800],
+                      thumbColor: Colors.purpleAccent,
+                      overlayColor: Colors.purpleAccent.withAlpha(51),
+                    ),
+                    child: Slider(
+                      value: sensorData.lcdContrast.toDouble(),
+                      min: 0,
+                      max: 100,
+                      divisions: 10,
+                      label: '${sensorData.lcdContrast}%',
+                      onChanged: (val) {
+                        sensorData.updateLcdContrast(val.toInt());
+                      },
+                      onChangeEnd: (val) {
+                        _bleService?.setLcdContrast(val.toInt());
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(

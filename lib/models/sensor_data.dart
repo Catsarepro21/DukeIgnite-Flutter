@@ -7,10 +7,14 @@ class SensorData extends ChangeNotifier {
   bool _isConnected = false;
   double _ppm = 0.0;
   int _volume = 50;
+  double _ppmThreshold = 0.5; // ppm alarm threshold (0.0–5.0)
+  int _lcdContrast = 50;   // LCD contrast (0–100)
 
   bool get isConnected => _isConnected;
   double get ppm => _ppm;
   int get volume => _volume;
+  double get ppmThreshold => _ppmThreshold;
+  int get lcdContrast => _lcdContrast;
 
   void setConnectionStatus(bool status) {
     if (_isConnected == status) return;
@@ -27,6 +31,18 @@ class SensorData extends ChangeNotifier {
   void updateVolume(int volume) {
     if (_volume == volume) return;
     _volume = volume;
+    notifyListeners();
+  }
+
+  void updatePpmThreshold(double ppm) {
+    if (_ppmThreshold == ppm) return;
+    _ppmThreshold = ppm;
+    notifyListeners();
+  }
+
+  void updateLcdContrast(int contrast) {
+    if (_lcdContrast == contrast) return;
+    _lcdContrast = contrast;
     notifyListeners();
   }
 }

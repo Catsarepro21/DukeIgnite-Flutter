@@ -175,11 +175,11 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
                 ),
               if (!_isScanning && !kIsWeb)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                const Padding(
+                  padding: EdgeInsets.only(top: 12),
                   child: TextButton(
                     onPressed: openAppSettings,
-                    child: const Text(
+                    child: Text(
                       'Open Settings',
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),

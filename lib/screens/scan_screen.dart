@@ -178,17 +178,6 @@ class _ScanScreenState extends State<ScanScreen> {
                     style: TextStyle(fontSize: 18),
                   ),
                 ),
-              if (!_isScanning && !kIsWeb)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: TextButton(
-                    onPressed: openAppSettings,
-                    child: Text(
-                      'Open Settings',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                  ),
-                ),
               if (_isScanning)
                 const CircularProgressIndicator(
                   valueColor:

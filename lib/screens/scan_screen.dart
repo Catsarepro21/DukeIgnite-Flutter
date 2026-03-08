@@ -73,13 +73,13 @@ class _ScanScreenState extends State<ScanScreen> {
     if (bleService == null) return;
 
     // On mobile we request permissions before scanning.
-    // iOS 13+: only Bluetooth permissions needed — location is NOT required for BLE.
-    // Android: location + Bluetooth required for BLE scanning.
+    // iOS: only general Bluetooth permission needed.
+    // Android: location + Bluetooth scan + Bluetooth connect required.
     if (!kIsWeb) {
       List<Permission> toRequest;
 
-      if (!kIsWeb && Platform.isIOS) {
-        toRequest = [Permission.bluetoothScan, Permission.bluetoothConnect];
+      if (Platform.isIOS) {
+        toRequest = [Permission.bluetooth];
       } else {
         // Android (and any other native platform)
         toRequest = [
@@ -92,13 +92,17 @@ class _ScanScreenState extends State<ScanScreen> {
       final statuses = await toRequest.request();
       debugPrint('[ScanScreen] Permissions: $statuses');
 
-      final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-      final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
-      final locationOk = Platform.isIOS
-          ? true // not required on iOS
-          : (statuses[Permission.location]?.isGranted ?? false);
+      bool allGranted = true;
+      if (Platform.isIOS) {
+        allGranted = statuses[Permission.bluetooth]?.isGranted ?? false;
+      } else {
+        final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
+        final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
+        final locationOk = statuses[Permission.location]?.isGranted ?? false;
+        allGranted = scanOk && connectOk && locationOk;
+      }
 
-      if (!scanOk || !connectOk || !locationOk) {
+      if (!allGranted) {
         setState(() {
           _statusMessage = Platform.isIOS
               ? 'Bluetooth permission is required.\nGo to Settings → Privacy → Bluetooth.'

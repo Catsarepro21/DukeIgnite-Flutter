@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -71,23 +72,37 @@ class _ScanScreenState extends State<ScanScreen> {
     final bleService = _bleService;
     if (bleService == null) return;
 
-    // On mobile (non-web) we need to request runtime permissions ourselves.
-    // universal_ble handles Windows/Linux/Web internally.
+    // On mobile we request permissions before scanning.
+    // iOS 13+: only Bluetooth permissions needed — location is NOT required for BLE.
+    // Android: location + Bluetooth required for BLE scanning.
     if (!kIsWeb) {
-      final statuses = await [
-        Permission.location,
-        Permission.bluetoothScan,
-        Permission.bluetoothConnect,
-      ].request();
+      List<Permission> toRequest;
 
+      if (!kIsWeb && Platform.isIOS) {
+        toRequest = [Permission.bluetoothScan, Permission.bluetoothConnect];
+      } else {
+        // Android (and any other native platform)
+        toRequest = [
+          Permission.location,
+          Permission.bluetoothScan,
+          Permission.bluetoothConnect,
+        ];
+      }
+
+      final statuses = await toRequest.request();
       debugPrint('[ScanScreen] Permissions: $statuses');
 
-      final locationOk = statuses[Permission.location]?.isGranted ?? false;
       final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
+      final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
+      final locationOk = Platform.isIOS
+          ? true // not required on iOS
+          : (statuses[Permission.location]?.isGranted ?? false);
 
-      if (!locationOk || !scanOk) {
+      if (!scanOk || !connectOk || !locationOk) {
         setState(() {
-          _statusMessage = 'Bluetooth & location permissions are required.';
+          _statusMessage = Platform.isIOS
+              ? 'Bluetooth permission is required.\nGo to Settings → Privacy → Bluetooth.'
+              : 'Bluetooth & location permissions are required.';
         });
         debugPrint('[ScanScreen] Permissions not granted — aborting scan.');
         return;
@@ -142,7 +157,7 @@ class _ScanScreenState extends State<ScanScreen> {
               ],
               const SizedBox(height: 40),
               if (!_isScanning)
-                ElevatedButton(
+                 ElevatedButton(
                   onPressed: _startScan,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
@@ -157,6 +172,17 @@ class _ScanScreenState extends State<ScanScreen> {
                   child: const Text(
                     'Start Scan',
                     style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              if (!_isScanning && !kIsWeb)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: TextButton(
+                    onPressed: openAppSettings,
+                    child: const Text(
+                      'Open Settings',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
                   ),
                 ),
               if (_isScanning)

@@ -1,41 +1,51 @@
 name: iOS-ipa-build
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to manually trigger the build from the Actions tab
 
 jobs:
   build-ios:
     name: 🎉 iOS Build
-    runs-on: macos-latest
+    runs-on: macos-latest # This uses Apple Silicon (arm64) by default
     steps:
       - uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          architecture: x64
-      - run: flutter pub get
+          # No architecture specified so it auto-detects arm64 for macos-latest
 
-      - run: pod repo update
-        working-directory: ios
+      - name: Install Dependencies
+        run: |
+          flutter pub get
+          cd ios
+          pod repo update
+          pod install
 
-      - run: flutter build ios --release --no-codesign
+      - name: Build iOS App (Unsigned)
+        # Builds the .app bundle without requiring Apple certificates
+        run: flutter build ios --release --no-codesign
 
-      - run: mkdir Payload
+      - name: Prepare Payload for IPA
+        # Manually structures the folder for Sideloadly compatibility
+        run: |
+          mkdir -p Payload
+          mv Runner.app Payload/
         working-directory: build/ios/iphoneos
 
-      - run: mv Runner.app/ Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Zip output
+      - name: Zip into .ipa
+        # Creates the final .ipa file from the Payload folder
         run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
-      - name: Upload binaries to release
+      - name: Create Release and Upload
+        # Uploads the file to the "Releases" section of your GitHub repo
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: v1.0.19
+          asset_name: FlutterIpaExport.ipa
+          tag: v2.0
           overwrite: true
-          body: "Test IOS release"
+          body: "Unsigned iOS build for sideloading with Sideloadly."

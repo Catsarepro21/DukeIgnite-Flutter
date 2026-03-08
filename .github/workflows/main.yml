@@ -1,20 +1,30 @@
-name: iOS-ipa-build
+name: Build and Release Unified App
 
 on:
-  workflow_dispatch: # Allows you to manually trigger the build from the Actions tab
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version (e.g. v1.0.24)'
+        required: true
+        default: 'v1.0.24'
+  push:
+    tags:
+      - 'v*' # Trigger automatically when a version tag is pushed
+
+permissions:
+  contents: write
 
 jobs:
   build-ios:
     name: 🎉 iOS Build
-    runs-on: macos-latest # This uses Apple Silicon (arm64) by default
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # No architecture specified so it auto-detects arm64 for macos-latest
 
       - name: Install Dependencies
         run: |
@@ -24,28 +34,107 @@ jobs:
           pod install
 
       - name: Build iOS App (Unsigned)
-        # Builds the .app bundle without requiring Apple certificates
         run: flutter build ios --release --no-codesign
 
       - name: Prepare Payload for IPA
-        # Manually structures the folder for Sideloadly compatibility
+        working-directory: build/ios/iphoneos
         run: |
           mkdir -p Payload
           mv Runner.app Payload/
-        working-directory: build/ios/iphoneos
 
       - name: Zip into .ipa
-        # Creates the final .ipa file from the Payload folder
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
+        run: zip -qq -r -9 DukeIgniteIOSFormaldehydeSensor.ipa Payload
 
-      - name: Create Release and Upload
-        # Uploads the file to the "Releases" section of your GitHub repo
-        uses: svenstaro/upload-release-action@v2
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          asset_name: FlutterIpaExport.ipa
-          tag: v1.0.23
-          overwrite: true
-          body: "Unsigned iOS build for sideloading with Sideloadly."
+          name: ios-ipa
+          path: build/ios/iphoneos/DukeIgniteIOSFormaldehydeSensor.ipa
+
+  build-windows:
+    name: 🪟 Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows App
+        run: flutter build windows --release
+
+      - name: Rename Executable for Bundle
+        run: Rename-Item -Path build\windows\x64\runner\Release\formaldehyde_monitor.exe -NewName DukeIgnite.exe
+
+      - name: Create ZIP Archive
+        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath WindowsApp.zip
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: WindowsApp.zip
+
+  create-release:
+    name: 📦 Create Unified Release
+    needs: [build-ios, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download iOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+
+      - name: Determine Tag
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.VERSION }}
+          name: Release ${{ steps.tag.outputs.VERSION }}
+          files: |
+            DukeIgniteIOSFormaldehydeSensor.ipa
+            WindowsApp.zip
+          body: |
+            Duke Ignite Formaldehyde App: Installation Guide
+            
+            iOS Installation
+            1. Downloads
+            App File: Download DukeIgniteIOSFormaldehydeSensor.ipa
+            Sideloadly Tool: Windows | macOS
+            Windows Users Only: You must also install the web versions of iTunes and iCloud.
+            
+            2. Sideloading Steps
+            Open Sideloadly and drag the .ipa file into the application window.
+            Enter your Apple ID and connect your iOS device via USB.
+            Press Start and wait for the "Done" status.
+            
+            3. Device Authorization
+            Trust Developer: Go to Settings > General > VPN & Device Management, click on developer apps(Will say my email), and select Trust.
+            Enable Developer Mode: Go to Settings > Privacy & Security > Developer Mode, toggle it On, and Restart your phone. Select Turn On after the reboot.
+            
+            Windows Installation (PC)
+            1. Download
+            Windows Bundle: Download WindowsApp.zip
+            
+            2. Setup Instructions
+            Extract the Folder: Locate the downloaded .zip file. Right-click it and select Extract All...
+            Launch: Open the newly extracted folder and double-click DukeIgnite.exe to start the application.

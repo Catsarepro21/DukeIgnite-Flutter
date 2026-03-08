@@ -46,6 +46,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/ios/iphoneos/FlutterIpaExport.ipa
           asset_name: FlutterIpaExport.ipa
-          tag: v2.0
+          tag: v1.0.20
           overwrite: true
           body: "Unsigned iOS build for sideloading with Sideloadly."

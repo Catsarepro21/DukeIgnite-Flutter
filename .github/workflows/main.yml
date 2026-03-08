@@ -38,4 +38,4 @@ jobs:
           file: build/ios/iphoneos/FlutterIpaExport.ipa
           tag: v1.0.19
           overwrite: true
-          body: "Test IOS release
+          body: "Test IOS release"

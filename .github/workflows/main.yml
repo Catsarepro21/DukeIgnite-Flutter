@@ -9,8 +9,55 @@ permissions:
   contents: write
 
 jobs:
+  check-version:
+    name: 🔍 Check Version Change
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check if version in pubspec.yaml changed
+        id: check
+        run: |
+          if git diff HEAD^ HEAD pubspec.yaml | grep -q '^+version:'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-web:
+    name: 🌐 Web Build & Deploy
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release --base-href "/DukeIgnite-Flutter/"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: gh-pages
+          force_orphan: true
+
   build-ios:
     name: 🎉 iOS Build
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +95,8 @@ jobs:
 
   build-windows:
     name: 🪟 Windows Build
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +137,8 @@ jobs:
 
   create-release:
     name: 📦 Create Unified Release
-    needs: [build-ios, build-windows]
+    needs: [build-ios, build-windows, check-version]
+    if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code to Read Version
@@ -130,6 +180,11 @@ jobs:
             DukeIgnite_Windows_Portable.zip
           body: |
             # Duke Ignite Formaldehyde App: Installation Guide
+            
+            ---
+            
+            ## Web Version (No Installation Required)
+            * **Access Instantly via Browser:** [Open Web App](https://catsarepro21.github.io/DukeIgnite-Flutter/)
             
             ---
             

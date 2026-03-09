@@ -185,6 +185,7 @@ jobs:
             
             ## Web Version (No Installation Required)
             * **Access Instantly via Browser:** [Open Web App](https://catsarepro21.github.io/DukeIgnite-Flutter/)
+            (Note: Browser MUST be able to use Bluetooth, such as chrome and edge on desktop. Browsers will NOT work on mobile without a specialized app)
             
             ---
             
@@ -208,7 +209,7 @@ jobs:
             
             ## Windows Installation (PC)
             
-            ### 1. Download Option A (Recommended)
+            ### 1. Download Option A (Installer)
             * **Windows Installer:** [Download DukeIgnite_Installer.exe](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgnite_Installer.exe)
             
             **Setup Instructions**

@@ -29,6 +29,13 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _loadVersion() async {
+    const envVersion = String.fromEnvironment('APP_VERSION');
+    if (kIsWeb && envVersion.isNotEmpty) {
+      if (!mounted) return;
+      setState(() => _version = envVersion);
+      return;
+    }
+
     final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() => _version = info.version);

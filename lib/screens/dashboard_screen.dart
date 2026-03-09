@@ -4,6 +4,7 @@ import '../models/sensor_data.dart';
 import '../services/ble_service.dart';
 import 'scan_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -36,6 +37,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _initPackageInfo() async {
+    const envVersion = String.fromEnvironment('APP_VERSION');
+    if (kIsWeb && envVersion.isNotEmpty) {
+      setState(() {
+        _version = envVersion;
+      });
+      return;
+    }
+
     final info = await PackageInfo.fromPlatform();
     setState(() {
       _version = info.version;

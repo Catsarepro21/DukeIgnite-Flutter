@@ -43,8 +43,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Extract Version
+        id: extract_version
+        run: |
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)
+          echo "VERSION=$APP_VERSION" >> $GITHUB_ENV
+
       - name: Build web
-        run: flutter build web --release --base-href "/DukeIgnite-Flutter/"
+        run: flutter build web --release --base-href "/DukeIgnite-Flutter/" --dart-define=APP_VERSION=${{ env.VERSION }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

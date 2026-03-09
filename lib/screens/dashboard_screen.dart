@@ -114,9 +114,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sensorData = Provider.of<SensorData>(context);
-    final isDanger = sensorData.ppm >= sensorData.ppmThreshold;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -138,216 +135,235 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // PPM Gauge Card
-            Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDanger
-                        ? Colors.redAccent.withAlpha(51)
-                        : Colors.blueAccent.withAlpha(26),
-                    blurRadius: 20,
-                    spreadRadius: 5,
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                final isDanger = sensorData.ppm >= sensorData.ppmThreshold;
+                return Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDanger
+                            ? Colors.redAccent.withAlpha(51)
+                            : Colors.blueAccent.withAlpha(26),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'Formaldehyde level',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _formatPpm(sensorData.ppm),
-                    style: TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.bold,
-                      color: isDanger ? Colors.redAccent : Colors.white,
-                    ),
-                  ),
-                  const Text(
-                    'PPM',
-                    style: TextStyle(color: Colors.white70, fontSize: 18),
-                  ),
-                  if (isDanger)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 10),
-                      child: Text(
-                        'WARNING: High Levels!',
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Formaldehyde level',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _formatPpm(sensorData.ppm),
                         style: TextStyle(
-                          color: Colors.redAccent,
+                          fontSize: 64,
                           fontWeight: FontWeight.bold,
+                          color: isDanger ? Colors.redAccent : Colors.white,
                         ),
                       ),
-                    ),
-                ],
-              ),
+                      const Text(
+                        'PPM',
+                        style: TextStyle(color: Colors.white70, fontSize: 18),
+                      ),
+                      if (isDanger)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Text(
+                            'WARNING: High Levels!',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 30),
 
             // Volume Control Card
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Alarm Volume',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Alarm Volume',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.volume_up, color: Colors.blueAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.blueAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.blueAccent,
+                          overlayColor: Colors.blueAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.volume.toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 10,
+                          label: sensorData.volume.toString(),
+                          onChanged: (val) {
+                            sensorData.updateVolume(val.toInt());
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setVolume(val.toInt());
+                          },
                         ),
                       ),
-                      Icon(Icons.volume_up, color: Colors.blueAccent[100]),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.blueAccent,
-                      inactiveTrackColor: Colors.grey[800],
-                      thumbColor: Colors.blueAccent,
-                      overlayColor: Colors.blueAccent.withAlpha(51),
-                    ),
-                    child: Slider(
-                      value: sensorData.volume.toDouble(),
-                      min: 0,
-                      max: 100,
-                      divisions: 10,
-                      label: sensorData.volume.toString(),
-                      onChanged: (val) {
-                        sensorData.updateVolume(val.toInt());
-                      },
-                      onChangeEnd: (val) {
-                        _bleService?.setVolume(val.toInt());
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 20),
 
             // PPM Threshold Control Card
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'PPM Alarm Threshold',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'PPM Alarm Threshold',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.warning_amber_rounded,
+                              color: Colors.orangeAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Alarm above ${sensorData.ppmThreshold} ppm',
+                        style: const TextStyle(
+                            color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.orangeAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.orangeAccent,
+                          overlayColor: Colors.orangeAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.ppmThreshold,
+                          min: 0.0,
+                          max: 5.0,
+                          divisions: 100, // 0.05 ppm increments
+                          label: '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
+                          onChanged: (val) {
+                            sensorData.updatePpmThreshold(val);
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setPpmThreshold(val);
+                          },
                         ),
                       ),
-                      Icon(Icons.warning_amber_rounded,
-                          color: Colors.orangeAccent[100]),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Alarm above ${sensorData.ppmThreshold} ppm',
-                    style: const TextStyle(
-                        color: Colors.grey, fontSize: 12),
-                  ),
-                  const SizedBox(height: 10),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.orangeAccent,
-                      inactiveTrackColor: Colors.grey[800],
-                      thumbColor: Colors.orangeAccent,
-                      overlayColor: Colors.orangeAccent.withAlpha(51),
-                    ),
-                    child: Slider(
-                      value: sensorData.ppmThreshold,
-                      min: 0.0,
-                      max: 5.0,
-                      divisions: 100, // 0.05 ppm increments
-                      label: '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
-                      onChanged: (val) {
-                        sensorData.updatePpmThreshold(val);
-                      },
-                      onChangeEnd: (val) {
-                        _bleService?.setPpmThreshold(val);
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 20),
 
             // LCD Contrast Control Card
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'LCD Contrast',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'LCD Contrast',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.brightness_medium,
+                              color: Colors.purpleAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.purpleAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.purpleAccent,
+                          overlayColor: Colors.purpleAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.lcdContrast.toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 10,
+                          label: '${sensorData.lcdContrast}%',
+                          onChanged: (val) {
+                            sensorData.updateLcdContrast(val.toInt());
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setLcdContrast(val.toInt());
+                          },
                         ),
                       ),
-                      Icon(Icons.brightness_medium,
-                          color: Colors.purpleAccent[100]),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.purpleAccent,
-                      inactiveTrackColor: Colors.grey[800],
-                      thumbColor: Colors.purpleAccent,
-                      overlayColor: Colors.purpleAccent.withAlpha(51),
-                    ),
-                    child: Slider(
-                      value: sensorData.lcdContrast.toDouble(),
-                      min: 0,
-                      max: 100,
-                      divisions: 10,
-                      label: '${sensorData.lcdContrast}%',
-                      onChanged: (val) {
-                        sensorData.updateLcdContrast(val.toInt());
-                      },
-                      onChangeEnd: (val) {
-                        _bleService?.setLcdContrast(val.toInt());
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 30),
+            
+            // Sensor Wi-Fi Setup Card (Static, no Consumer needed)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(

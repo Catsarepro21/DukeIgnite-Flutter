@@ -354,7 +354,10 @@ class RealBleService implements BleService {
 
     try {
       // Re-fetch service/characteristic handles before every write.
-      await UniversalBle.discoverServices(device.deviceId);
+      // (Required on Web due to a Chrome GATT invalidation bug, but massive overhead on Native)
+      if (kIsWeb) {
+        await UniversalBle.discoverServices(device.deviceId);
+      }
 
       // Attempt 1: Write With Response.
       await UniversalBle.write(device.deviceId, serviceUuid, cmdCharUuid, packet);

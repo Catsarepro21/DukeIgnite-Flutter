@@ -106,14 +106,14 @@ jobs:
         with:
           name: windows-zip
 
+      - name: Checkout Code to Read Version
+        uses: actions/checkout@v4
+
       - name: Determine Tag
         id: tag
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          fi
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)
+          echo "VERSION=v$APP_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -95,16 +95,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ios-ipa
+          path: .
 
       - name: Download Windows Installer Artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-installer
+          path: .
 
       - name: Download Windows ZIP Artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-zip
+          path: .
 
       - name: Checkout Code to Read Version
         uses: actions/checkout@v4
@@ -167,3 +170,11 @@ jobs:
             1. **Extract the Folder:** Locate the downloaded `.zip` file. Right-click it and select **Extract All...**
             2. **Launch:** Open the newly extracted folder and double-click `DukeIgnite.exe` to start the application.
             3. **SmartScreen:** If Microsoft SmartScreen appears, click "More info" and "Run anyway".
+
+      - name: Delete Old Releases
+        uses: dev-drprasad/delete-older-releases@v0.3.3
+        with:
+          keep_latest: 1
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

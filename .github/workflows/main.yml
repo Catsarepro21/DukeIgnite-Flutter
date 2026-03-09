@@ -51,6 +51,8 @@ jobs:
 
       - name: Build web
         run: flutter build web --release --base-href "/DukeIgnite-Flutter/" --dart-define=APP_VERSION=${{ env.VERSION }}
+        env:
+          VERSION: ${{ env.VERSION }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

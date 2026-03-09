@@ -149,14 +149,21 @@ jobs:
             Enable Developer Mode: Go to Settings > Privacy & Security > Developer Mode, toggle it On, and Restart your phone. Select Turn On after the reboot.
             
             Windows Installation (PC)
+            
             Option A: Recommended Installer
-            1. Download the `DukeIgnite_Installer.exe` file.
-            2. Double click the downloaded installer.
-            3. If Microsoft SmartScreen appears, click "More info" and "Run anyway".
-            4. Follow the setup wizard to install the app and create a desktop shortcut.
+            1. Download
+            Windows Installer: Download DukeIgnite_Installer.exe
+            
+            2. Setup Instructions
+            Launch: Double click the downloaded installer.
+            SmartScreen: If Microsoft SmartScreen appears, click "More info" and "Run anyway".
+            Install: Follow the setup wizard to install the app and create a desktop shortcut.
             
             Option B: Portable Version (ZIP)
-            1. Download `DukeIgnite_Windows_Portable.zip`.
-            2. Extract the folder: Right-click it and select Extract All...
-            3. Open the newly extracted folder and double-click `DukeIgnite.exe`.
-            4. If Microsoft SmartScreen appears, click "More info" and "Run anyway".
+            1. Download
+            Windows Bundle: Download DukeIgnite_Windows_Portable.zip
+            
+            2. Setup Instructions
+            Extract the Folder: Locate the downloaded .zip file. Right-click it and select Extract All...
+            Launch: Open the newly extracted folder and double-click DukeIgnite.exe to start the application.
+            SmartScreen: If Microsoft SmartScreen appears, click "More info" and "Run anyway".

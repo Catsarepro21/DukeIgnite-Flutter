@@ -69,17 +69,27 @@ jobs:
       - name: Build Windows App
         run: flutter build windows --release
 
-      - name: Rename Executable for Bundle
+      - name: Build MSIX Installer
+        # echo N skips the local certificate installation prompt which blocks CI
+        run: echo "N" | flutter pub run msix:create
+
+      - name: Rename Executable for Portable Bundle
         run: Rename-Item -Path build\windows\x64\runner\Release\formaldehyde_monitor.exe -NewName DukeIgnite.exe
 
-      - name: Create ZIP Archive
-        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath WindowsApp.zip
+      - name: Create Portable ZIP Archive
+        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath DukeIgnite_Windows_Portable.zip
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows MSIX Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msix
+          path: build\windows\x64\runner\Release\formaldehyde_monitor.msix
+
+      - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-zip
-          path: WindowsApp.zip
+          path: DukeIgnite_Windows_Portable.zip
 
   create-release:
     name: 📦 Create Unified Release
@@ -91,7 +101,12 @@ jobs:
         with:
           name: ios-ipa
 
-      - name: Download Windows Artifact
+      - name: Download Windows MSIX Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msix
+
+      - name: Download Windows ZIP Artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-zip
@@ -112,7 +127,8 @@ jobs:
           name: Release ${{ steps.tag.outputs.VERSION }}
           files: |
             DukeIgniteIOSFormaldehydeSensor.ipa
-            WindowsApp.zip
+            formaldehyde_monitor.msix
+            DukeIgnite_Windows_Portable.zip
           body: |
             Duke Ignite Formaldehyde App: Installation Guide
             
@@ -132,9 +148,15 @@ jobs:
             Enable Developer Mode: Go to Settings > Privacy & Security > Developer Mode, toggle it On, and Restart your phone. Select Turn On after the reboot.
             
             Windows Installation (PC)
-            1. Download
-            Windows Bundle: Download WindowsApp.zip
+            Option A: Recommended Installer (MSIX)
+            1. Download the `formaldehyde_monitor.msix` file.
+            2. Before installing, right-click the file -> Properties -> Digital Signatures.
+            3. Select the signature -> Details -> View Certificate -> Install Certificate.
+            4. Place it in "Local Machine" -> "Trusted Root Certification Authorities".
+            5. Double-click the `.msix` file to install the app cleanly.
             
-            2. Setup Instructions
-            Extract the Folder: Locate the downloaded .zip file. Right-click it and select Extract All...
-            Launch: Open the newly extracted folder and double-click DukeIgnite.exe to start the application.
+            Option B: Portable Version (ZIP)
+            1. Download `DukeIgnite_Windows_Portable.zip`.
+            2. Extract the folder: Right-click it and select Extract All...
+            3. Open the newly extracted folder and double-click `DukeIgnite.exe`.
+            4. If Microsoft SmartScreen appears, click "More info" and "Run anyway".

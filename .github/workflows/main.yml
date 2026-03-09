@@ -84,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: Output/DukeIgnite_Installer.exe
+          path: windows/Output/DukeIgnite_Installer.exe
 
       - name: Upload Windows ZIP Artifact
         uses: actions/upload-artifact@v4

@@ -131,39 +131,44 @@ jobs:
             DukeIgnite_Installer.exe
             DukeIgnite_Windows_Portable.zip
           body: |
-            Duke Ignite Formaldehyde App: Installation Guide
+            # Duke Ignite Formaldehyde App: Installation Guide
             
-            iOS Installation
-            1. Downloads
-            App File: Download DukeIgniteIOSFormaldehydeSensor.ipa
-            Sideloadly Tool: Windows | macOS
-            Windows Users Only: You must also install the web versions of iTunes and iCloud.
+            ---
             
-            2. Sideloading Steps
-            Open Sideloadly and drag the .ipa file into the application window.
-            Enter your Apple ID and connect your iOS device via USB.
-            Press Start and wait for the "Done" status.
+            ##  iOS Installation
             
-            3. Device Authorization
-            Trust Developer: Go to Settings > General > VPN & Device Management, click on developer apps(Will say my email), and select Trust.
-            Enable Developer Mode: Go to Settings > Privacy & Security > Developer Mode, toggle it On, and Restart your phone. Select Turn On after the reboot.
+            ### 1. Downloads
+            * **App File:** [Download DukeIgniteIOSFormaldehydeSensor.ipa](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgniteIOSFormaldehydeSensor.ipa)
+            * **Sideloadly Tool:** [Windows](https://sideloadly.io/SideloadlySetup64.exe) | [macOS](https://sideloadly.io/SideloadlySetup.dmg)
+            * **Windows Users Only:** You must also install the web versions of [iTunes](https://www.apple.com/itunes/download/win64) and [iCloud](https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe).
             
-            Windows Installation (PC)
+            ### 2. Sideloading Steps
+            1. Open **Sideloadly** and drag the `.ipa` file into the application window.
+            2. Enter your **Apple ID** and connect your iOS device via USB.
+            3. Press **Start** and wait for the "Done" status.
             
-            Option A: Recommended Installer
-            1. Download
-            Windows Installer: Download DukeIgnite_Installer.exe
+            ### 3. Device Authorization
+            1. **Trust Developer:** Go to **Settings > General > VPN & Device Management**, click on developer apps(Will say my email), and select **Trust**.
+            2. **Enable Developer Mode:** Go to **Settings > Privacy & Security > Developer Mode**, toggle it **On**, and **Restart** your phone. Select **Turn On** after the reboot.
             
-            2. Setup Instructions
-            Launch: Double click the downloaded installer.
-            SmartScreen: If Microsoft SmartScreen appears, click "More info" and "Run anyway".
-            Install: Follow the setup wizard to install the app and create a desktop shortcut.
+            ---
             
-            Option B: Portable Version (ZIP)
-            1. Download
-            Windows Bundle: Download DukeIgnite_Windows_Portable.zip
+            ## Windows Installation (PC)
             
-            2. Setup Instructions
-            Extract the Folder: Locate the downloaded .zip file. Right-click it and select Extract All...
-            Launch: Open the newly extracted folder and double-click DukeIgnite.exe to start the application.
-            SmartScreen: If Microsoft SmartScreen appears, click "More info" and "Run anyway".
+            ### 1. Download Option A (Recommended)
+            * **Windows Installer:** [Download DukeIgnite_Installer.exe](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgnite_Installer.exe)
+            
+            **Setup Instructions**
+            1. **Launch:** Double click the downloaded installer.
+            2. **SmartScreen:** If Microsoft SmartScreen appears, click "More info" and "Run anyway".
+            3. **Install:** Follow the setup wizard to install the app and create a desktop shortcut.
+            
+            ---
+            
+            ### 2. Download Option B (Portable)
+            * **Windows Bundle:** [Download DukeIgnite_Windows_Portable.zip](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgnite_Windows_Portable.zip)
+            
+            **Setup Instructions**
+            1. **Extract the Folder:** Locate the downloaded `.zip` file. Right-click it and select **Extract All...**
+            2. **Launch:** Open the newly extracted folder and double-click `DukeIgnite.exe` to start the application.
+            3. **SmartScreen:** If Microsoft SmartScreen appears, click "More info" and "Run anyway".

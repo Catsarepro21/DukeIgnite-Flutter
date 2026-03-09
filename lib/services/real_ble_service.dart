@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 // Hide universal_ble's internal BleService model to avoid name collision
@@ -55,6 +56,9 @@ class RealBleService implements BleService {
   /// set this flag so we never attempt subscription again on this connection.
   bool _skipSubscription = false;
 
+  bool _intentionalDisconnect = false;
+  Timer? _reconnectTimer;
+
   RealBleService(this.sensorData) {
     // Listen to connection state changes.
     UniversalBle.onConnectionChange =
@@ -64,13 +68,34 @@ class RealBleService implements BleService {
         '[BLE] Connection change: deviceId=$deviceId '
         'connected=$isConnected error=$error',
       );
+      
       _isConnected = isConnected;
-      if (!isConnected) {
+      
+      if (isConnected) {
+        _reconnectTimer?.cancel();
+        sensorData.setConnectionStatus(true);
+      } else {
         _serviceReady = false;
         _skipSubscription = false;
         debugPrint('[BLE] Disconnected — flags cleared.');
+        
+        if (!_intentionalDisconnect) {
+          debugPrint('[BLE] Unexpected disconnect. Attempting auto-reconnect in background...');
+          // Try connecting again immediately
+          _connect(_device!);
+          
+          // Give it 5 seconds to reconnect before notifying UI
+          _reconnectTimer?.cancel();
+          _reconnectTimer = Timer(const Duration(seconds: 5), () {
+            if (!_isConnected && _device != null) {
+              debugPrint('[BLE] Auto-reconnect failed. Notifying UI of disconnect.');
+              sensorData.setConnectionStatus(false);
+            }
+          });
+        } else {
+          sensorData.setConnectionStatus(false);
+        }
       }
-      sensorData.setConnectionStatus(isConnected);
     };
 
     // Listen to characteristic value changes (PPM notifications).
@@ -97,6 +122,8 @@ class RealBleService implements BleService {
   @override
   void startScan() {
     debugPrint('[BLE] startScan() → target: "$targetDeviceName"');
+    _intentionalDisconnect = false;
+    _reconnectTimer?.cancel();
     _serviceReady = false;
     _skipSubscription = false;
     _isConnecting = false;
@@ -131,6 +158,8 @@ class RealBleService implements BleService {
   @override
   void disconnect() {
     debugPrint('[BLE] disconnect() called.');
+    _intentionalDisconnect = true;
+    _reconnectTimer?.cancel();
     _cleanUp();
   }
 

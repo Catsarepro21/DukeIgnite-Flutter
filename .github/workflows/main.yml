@@ -91,6 +91,9 @@ jobs:
     needs: [build-ios, build-windows]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code to Read Version
+        uses: actions/checkout@v4
+
       - name: Download iOS Artifact
         uses: actions/download-artifact@v4
         with:
@@ -108,9 +111,6 @@ jobs:
         with:
           name: windows-zip
           path: .
-
-      - name: Checkout Code to Read Version
-        uses: actions/checkout@v4
 
       - name: Determine Tag
         id: tag

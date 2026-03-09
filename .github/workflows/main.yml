@@ -289,7 +289,7 @@ jobs:
             * **App File:** [Download DukeIgniteIOSFormaldehydeSensor.ipa](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgniteIOSFormaldehydeSensor.ipa)
             * **Sideloadly Tool:** [Windows](https://sideloadly.io/SideloadlySetup64.exe) | [macOS](https://sideloadly.io/SideloadlySetup.dmg)
             * **Windows Users Only:** You must also install the web versions of [iTunes](https://www.apple.com/itunes/download/win64) and [iCloud](https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe).
-            
+            * **(Note that for auto-wifi redeploying, sync over wifi must be enabled in iTunes.)
             ### 2. Sideloading Steps
             1. Open **Sideloadly** and drag the `.ipa` file into the application window.
             2. Enter your **Apple ID** and connect your iOS device via USB.

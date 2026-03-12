@@ -214,7 +214,7 @@ class _ScanScreenState extends State<ScanScreen> {
             if (_debugTapCount >= 5) {
               _debugTapCount = 0;
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const DebugConsoleScreen()),
+                MaterialPageRoute(builder: (context) => DebugConsoleScreen()),
               );
             }
           },

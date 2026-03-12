@@ -479,7 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _debugTapCount = 0;
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const DebugConsoleScreen(),
+                        builder: (context) => DebugConsoleScreen(),
                       ),
                     );
                   }

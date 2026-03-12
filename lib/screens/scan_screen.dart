@@ -234,7 +234,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       _debugTapCount = 0;
                       Navigator.of(context).pop(); // Close dialog
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => DebugConsoleScreen()),
+                        MaterialPageRoute(builder: (context) => const DebugConsoleScreen()),
                       );
                     }
                   },

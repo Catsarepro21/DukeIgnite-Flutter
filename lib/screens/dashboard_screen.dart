@@ -499,7 +499,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _debugTapCount = 0;
                       Navigator.of(context).pop(); // Close dialog
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => DebugConsoleScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const DebugConsoleScreen(),
+                        ),
                       );
                     }
                   },

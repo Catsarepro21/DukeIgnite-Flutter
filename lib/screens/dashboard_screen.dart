@@ -134,6 +134,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _showAboutDialog,
+          ),
+          IconButton(
             icon: const Icon(Icons.bluetooth_disabled, color: Colors.white),
             onPressed: () {
               _bleService?.disconnect();
@@ -462,36 +466,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
-            Center(
-              child: GestureDetector(
-                onTap: () {
-                  final now = DateTime.now();
-                  if (_lastTapTime == null ||
-                      now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
-                    _debugTapCount = 1;
-                  } else {
-                    _debugTapCount++;
-                  }
-                  _lastTapTime = now;
-
-                  if (_debugTapCount >= 5) {
-                    _debugTapCount = 0;
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => DebugConsoleScreen(),
-                      ),
-                    );
-                  }
-                },
-                child: Text(
-                  'v.$_version',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAboutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('About App'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Duke Ignite Formaldehyde Monitor'),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    final now = DateTime.now();
+                    if (_lastTapTime == null || 
+                        now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
+                      _debugTapCount = 1;
+                    } else {
+                      _debugTapCount++;
+                    }
+                    _lastTapTime = now;
+
+                    if (_debugTapCount >= 5) {
+                      _debugTapCount = 0;
+                      Navigator.of(context).pop(); // Close dialog
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => DebugConsoleScreen()),
+                      );
+                    }
+                  },
+                  child: Text(
+                    'Version $_version',
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

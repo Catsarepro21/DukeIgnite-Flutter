@@ -103,8 +103,14 @@ class RealBleService implements BleService {
     UniversalBle.onValueChange =
         (String deviceId, String charId, Uint8List value, int? _) {
       if (_device?.deviceId != deviceId) return;
-      if (!BleUuidParser.compareStrings(charId, ppmCharUuid)) return;
-      debugPrint('[BLE] PPM notification raw: $value (${value.length} bytes)');
+      
+      // LOG EVERYTHING for debugging iOS
+      debugPrint('[BLE] Notification received: ID=$charId size=${value.length}');
+
+      // Robust check: compare normalized strings (lowercase, no dashes)
+      if (_normalizeUuid(charId) != _normalizeUuid(ppmCharUuid)) return;
+
+      debugPrint('[BLE] PPM notification match found. Raw: $value');
       if (value.length >= 4) {
         final ppm = value.buffer.asByteData().getFloat32(0, Endian.little);
         debugPrint('[BLE] PPM parsed: $ppm');
@@ -282,7 +288,7 @@ class RealBleService implements BleService {
       bool foundService = false;
       for (final s in services) {
         debugPrint('[BLE]   Service: ${s.uuid}');
-        if (BleUuidParser.compareStrings(s.uuid, serviceUuid)) {
+        if (_normalizeUuid(s.uuid) == _normalizeUuid(serviceUuid)) {
           foundService = true;
           for (final c in s.characteristics) {
             debugPrint('[BLE]     Char: ${c.uuid} props=${c.properties}');
@@ -431,5 +437,11 @@ class RealBleService implements BleService {
         debugPrint('[BLE] disconnect error (ignored): $e');
       });
     }
+  }
+
+  /// Normalizes UUIDs for robust comparison across platforms.
+  /// iOS, Web, and Windows often format the same UUID differently.
+  String _normalizeUuid(String uuid) {
+    return uuid.toLowerCase().replaceAll('-', '').replaceAll('0x', '');
   }
 }

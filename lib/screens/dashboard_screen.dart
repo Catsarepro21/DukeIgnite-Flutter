@@ -5,6 +5,7 @@ import '../services/ble_service.dart';
 import 'scan_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'debug_console_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,6 +20,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   SensorData? _sensorData;
   BleService? _bleService;
   String _version = '';
+  int _debugTapCount = 0;
+  DateTime? _lastTapTime;
 
   @override
   void didChangeDependencies() {
@@ -461,9 +464,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 30),
             Center(
-              child: Text(
-                'v.$_version',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              child: GestureDetector(
+                onTap: () {
+                  final now = DateTime.now();
+                  if (_lastTapTime == null ||
+                      now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
+                    _debugTapCount = 1;
+                  } else {
+                    _debugTapCount++;
+                  }
+                  _lastTapTime = now;
+
+                  if (_debugTapCount >= 5) {
+                    _debugTapCount = 0;
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const DebugConsoleScreen(),
+                      ),
+                    );
+                  }
+                },
+                child: Text(
+                  'v.$_version',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ),
             ),
           ],

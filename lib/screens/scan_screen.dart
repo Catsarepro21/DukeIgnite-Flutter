@@ -1,12 +1,14 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../models/sensor_data.dart';
 import '../services/ble_service.dart';
+import '../services/log_service.dart';
 import 'dashboard_screen.dart';
+import 'debug_console_screen.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -21,6 +23,8 @@ class _ScanScreenState extends State<ScanScreen> {
   String _version = '';
   SensorData? _sensorData;
   BleService? _bleService;
+  int _debugTapCount = 0;
+  DateTime? _lastTapTime;
 
   @override
   void initState() {
@@ -60,7 +64,7 @@ class _ScanScreenState extends State<ScanScreen> {
   void _onConnectionChange() {
     if (!mounted || _sensorData == null) return;
     if (_sensorData!.isConnected) {
-      debugPrint('[ScanScreen] Device connected — navigating to Dashboard.');
+      LogService.instance.log('[ScanScreen] Device connected — navigating to Dashboard.');
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
@@ -97,7 +101,7 @@ class _ScanScreenState extends State<ScanScreen> {
       }
 
       final statuses = await toRequest.request();
-      debugPrint('[ScanScreen] Permissions: $statuses');
+      LogService.instance.log('[ScanScreen] Permissions: $statuses');
 
       bool allGranted = true;
       if (Platform.isIOS) {
@@ -115,7 +119,7 @@ class _ScanScreenState extends State<ScanScreen> {
               ? 'Bluetooth permission is required.\nGo to Settings → Privacy → Bluetooth.'
               : 'Bluetooth & location permissions are required.';
         });
-        debugPrint('[ScanScreen] Permissions not granted — aborting scan.');
+        LogService.instance.log('[ScanScreen] Permissions not granted — aborting scan.');
         return;
       }
     }
@@ -128,7 +132,7 @@ class _ScanScreenState extends State<ScanScreen> {
           : 'Searching for Formaldehyde Sensor…';
     });
 
-    debugPrint('[ScanScreen] Starting BLE scan (web=$kIsWeb).');
+    LogService.instance.log('[ScanScreen] Starting BLE scan (web=$kIsWeb).');
     bleService.startScan();
   }
 
@@ -196,10 +200,29 @@ class _ScanScreenState extends State<ScanScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Text(
-          _version.isEmpty ? '' : 'v.$_version',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
+        child: GestureDetector(
+          onTap: () {
+            final now = DateTime.now();
+            if (_lastTapTime == null || 
+                now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
+              _debugTapCount = 1;
+            } else {
+              _debugTapCount++;
+            }
+            _lastTapTime = now;
+
+            if (_debugTapCount >= 5) {
+              _debugTapCount = 0;
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const DebugConsoleScreen()),
+              );
+            }
+          },
+          child: Text(
+            _version.isEmpty ? '' : 'v.$_version',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ),
       ),
     );

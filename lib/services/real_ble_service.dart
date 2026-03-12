@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 // Hide universal_ble's internal BleService model to avoid name collision
 // with our own BleService abstract class.
 import 'package:universal_ble/universal_ble.dart' hide BleService;
 import '../models/sensor_data.dart';
 import 'ble_service.dart';
+import 'log_service.dart';
 
 // ---------------------------------------------------------------------------
 // BLE Configuration
@@ -64,7 +65,7 @@ class RealBleService implements BleService {
     UniversalBle.onConnectionChange =
         (String deviceId, bool isConnected, String? error) {
       if (_device?.deviceId != deviceId) return;
-      debugPrint(
+      LogService.instance.log(
         '[BLE] Connection change: deviceId=$deviceId '
         'connected=$isConnected error=$error',
       );
@@ -77,10 +78,10 @@ class RealBleService implements BleService {
       } else {
         _serviceReady = false;
         _skipSubscription = false;
-        debugPrint('[BLE] Disconnected — flags cleared.');
+        LogService.instance.log('[BLE] Disconnected — flags cleared.');
         
         if (!_intentionalDisconnect) {
-          debugPrint('[BLE] Unexpected disconnect. Attempting auto-reconnect in background...');
+          LogService.instance.log('[BLE] Unexpected disconnect. Attempting auto-reconnect in background...');
           // Try connecting again immediately
           _connect(_device!);
           
@@ -88,7 +89,7 @@ class RealBleService implements BleService {
           _reconnectTimer?.cancel();
           _reconnectTimer = Timer(const Duration(seconds: 5), () {
             if (!_isConnected && _device != null) {
-              debugPrint('[BLE] Auto-reconnect failed. Notifying UI of disconnect.');
+              LogService.instance.log('[BLE] Auto-reconnect failed. Notifying UI of disconnect.');
               sensorData.setConnectionStatus(false);
             }
           });
@@ -105,18 +106,18 @@ class RealBleService implements BleService {
       if (_device?.deviceId != deviceId) return;
       
       // LOG EVERYTHING for debugging iOS
-      debugPrint('[BLE] Notification received: ID=$charId size=${value.length}');
+      LogService.instance.log('[BLE] Notification received: ID=$charId size=${value.length}');
 
       // Robust check: compare normalized strings (lowercase, no dashes)
       if (_normalizeUuid(charId) != _normalizeUuid(ppmCharUuid)) return;
 
-      debugPrint('[BLE] PPM notification match found. Raw: $value');
+      LogService.instance.log('[BLE] PPM notification match found. Raw: $value');
       if (value.length >= 4) {
         final ppm = value.buffer.asByteData().getFloat32(0, Endian.little);
-        debugPrint('[BLE] PPM parsed: $ppm');
+        LogService.instance.log('[BLE] PPM parsed: $ppm');
         sensorData.updatePpm(ppm);
       } else {
-        debugPrint('[BLE] PPM notification too short — ignored.');
+        LogService.instance.log('[BLE] PPM notification too short — ignored.');
       }
     };
   }
@@ -127,7 +128,7 @@ class RealBleService implements BleService {
 
   @override
   void startScan() {
-    debugPrint('[BLE] startScan() → target: "$targetDeviceName"');
+    LogService.instance.log('[BLE] startScan() → target: "$targetDeviceName"');
     _intentionalDisconnect = false;
     _reconnectTimer?.cancel();
     _serviceReady = false;
@@ -135,13 +136,13 @@ class RealBleService implements BleService {
     _isConnecting = false;
 
     UniversalBle.onScanResult = (BleDevice device) {
-      debugPrint(
+      LogService.instance.log(
         '[BLE] Scan result: "${device.name}" '
         '(${device.deviceId}) RSSI=${device.rssi}',
       );
       if (device.name == targetDeviceName && !_isConnecting) {
         _isConnecting = true;
-        debugPrint('[BLE] Target found — stopping scan and connecting.');
+        LogService.instance.log('[BLE] Target found — stopping scan and connecting.');
         UniversalBle.stopScan();
         _connect(device);
       }
@@ -158,12 +159,12 @@ class RealBleService implements BleService {
         web: WebOptions(optionalServices: [serviceUuid]),
       ),
     );
-    debugPrint('[BLE] Scan started (web=$kIsWeb).');
+    LogService.instance.log('[BLE] Scan started (web=$kIsWeb).');
   }
 
   @override
   void disconnect() {
-    debugPrint('[BLE] disconnect() called.');
+    LogService.instance.log('[BLE] disconnect() called.');
     _intentionalDisconnect = true;
     _reconnectTimer?.cancel();
     _cleanUp();
@@ -172,15 +173,15 @@ class RealBleService implements BleService {
   @override
   Future<void> setVolume(int volume) async {
     if (!_isConnected || _device == null) {
-      debugPrint('[BLE] setVolume($volume) skipped — not connected.');
+      LogService.instance.log('[BLE] setVolume($volume) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      debugPrint('[BLE] setVolume($volume) skipped — discovery not complete yet.');
+      LogService.instance.log('[BLE] setVolume($volume) skipped — discovery not complete yet.');
       return;
     }
     final packet = Uint8List.fromList([_cmdVolume, volume.clamp(0, 100)]);
-    debugPrint('[BLE] setVolume($volume) → writing packet $packet');
+    LogService.instance.log('[BLE] setVolume($volume) → writing packet $packet');
     final ok = await _writeCommand(packet);
     if (ok) sensorData.updateVolume(volume);
   }
@@ -188,18 +189,18 @@ class RealBleService implements BleService {
   @override
   Future<void> setWifiCredentials(String ssid, String pass) async {
     if (!_isConnected || _device == null) {
-      debugPrint('[BLE] setWifiCredentials() skipped — not connected.');
+      LogService.instance.log('[BLE] setWifiCredentials() skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      debugPrint('[BLE] setWifiCredentials() skipped — discovery not complete yet.');
+      LogService.instance.log('[BLE] setWifiCredentials() skipped — discovery not complete yet.');
       return;
     }
     // Build packet: [0x02, ...ssidBytes, 0x00, ...passBytes]
     final packet = Uint8List.fromList(
       [_cmdWifi, ...ssid.codeUnits, 0x00, ...pass.codeUnits],
     );
-    debugPrint(
+    LogService.instance.log(
       '[BLE] setWifiCredentials(ssid="$ssid") → '
       'packet length=${packet.length} bytes',
     );
@@ -209,11 +210,11 @@ class RealBleService implements BleService {
   @override
   Future<void> setPpmThreshold(double ppm) async {
     if (!_isConnected || _device == null) {
-      debugPrint('[BLE] setPpmThreshold($ppm) skipped — not connected.');
+      LogService.instance.log('[BLE] setPpmThreshold($ppm) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      debugPrint('[BLE] setPpmThreshold($ppm) skipped — discovery not complete yet.');
+      LogService.instance.log('[BLE] setPpmThreshold($ppm) skipped — discovery not complete yet.');
       return;
     }
     final clamped = ppm.clamp(0.0, 5.0);
@@ -222,30 +223,30 @@ class RealBleService implements BleService {
     final packet = Uint8List.fromList(
       [_cmdThreshold, ...bytes.buffer.asUint8List()],
     );
-    debugPrint('[BLE] setPpmThreshold($clamped) → $packet');
+    LogService.instance.log('[BLE] setPpmThreshold($clamped) → $packet');
     await _writeCommand(packet);
   }
 
   @override
   Future<void> setLcdContrast(int contrast) async {
     if (!_isConnected || _device == null) {
-      debugPrint('[BLE] setLcdContrast($contrast) skipped — not connected.');
+      LogService.instance.log('[BLE] setLcdContrast($contrast) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      debugPrint('[BLE] setLcdContrast($contrast) skipped — discovery not complete yet.');
+      LogService.instance.log('[BLE] setLcdContrast($contrast) skipped — discovery not complete yet.');
       return;
     }
     final clamped = contrast.clamp(0, 100);
     final packet = Uint8List.fromList([_cmdContrast, clamped]);
-    debugPrint('[BLE] setLcdContrast($clamped) → $packet');
+    LogService.instance.log('[BLE] setLcdContrast($clamped) → $packet');
     await _writeCommand(packet);
     sensorData.updateLcdContrast(clamped);
   }
 
   @override
   void dispose() {
-    debugPrint('[BLE] dispose().');
+    LogService.instance.log('[BLE] dispose().');
     _cleanUp();
   }
 
@@ -255,15 +256,15 @@ class RealBleService implements BleService {
 
   Future<void> _connect(BleDevice device) async {
     _device = device;
-    debugPrint('[BLE] Connecting to ${device.deviceId}…');
+    LogService.instance.log('[BLE] Connecting to ${device.deviceId}…');
     try {
       await UniversalBle.connect(device.deviceId);
       // connect() completes after onConnectionChange fires with isConnected=true,
       // which has already triggered UI navigation. Now run discovery.
-      debugPrint('[BLE] connect() returned — discovering services…');
+      LogService.instance.log('[BLE] connect() returned — discovering services…');
       await _discoverAndSubscribe();
     } catch (e) {
-      debugPrint('[BLE] _connect() ERROR: $e');
+      LogService.instance.log('[BLE] _connect() ERROR: $e');
     }
   }
 
@@ -273,40 +274,40 @@ class RealBleService implements BleService {
 
     try {
       var services = await UniversalBle.discoverServices(device.deviceId);
-      debugPrint('[BLE] Discovered ${services.length} service(s).');
+      LogService.instance.log('[BLE] Discovered ${services.length} service(s).');
 
       // nRF Connect sometimes needs a moment to make its GATT server
       // available after a connection. Retry once if we get an empty list.
       if (services.isEmpty && _isConnected) {
-        debugPrint('[BLE] 0 services found — retrying after 1.5 s…');
+        LogService.instance.log('[BLE] 0 services found — retrying after 1.5 s…');
         await Future<void>.delayed(const Duration(milliseconds: 1500));
         if (!_isConnected) return; // Disconnected during delay.
         services = await UniversalBle.discoverServices(device.deviceId);
-        debugPrint('[BLE] Retry discovered ${services.length} service(s).');
+        LogService.instance.log('[BLE] Retry discovered ${services.length} service(s).');
       }
 
       bool foundService = false;
       for (final s in services) {
-        debugPrint('[BLE]   Service: ${s.uuid}');
+        LogService.instance.log('[BLE]   Service: ${s.uuid}');
         if (_normalizeUuid(s.uuid) == _normalizeUuid(serviceUuid)) {
           foundService = true;
           for (final c in s.characteristics) {
-            debugPrint('[BLE]     Char: ${c.uuid} props=${c.properties}');
+            LogService.instance.log('[BLE]     Char: ${c.uuid} props=${c.properties}');
           }
           if (!_skipSubscription) {
             await _subscribeToPpm(device.deviceId);
           } else {
-            debugPrint('[BLE] Skipping subscription (previously caused GATT invalidation).');
+            LogService.instance.log('[BLE] Skipping subscription (previously caused GATT invalidation).');
           }
           break;
         }
       }
 
       if (!foundService) {
-        debugPrint('[BLE] WARNING: Target service not found! Is the nRF Connect GATT Server ON?');
+        LogService.instance.log('[BLE] WARNING: Target service not found! Is the nRF Connect GATT Server ON?');
       }
     } catch (e) {
-      debugPrint('[BLE] _discoverAndSubscribe() ERROR: $e');
+      LogService.instance.log('[BLE] _discoverAndSubscribe() ERROR: $e');
     }
 
     // Only unlock writes if the device is still connected.
@@ -314,9 +315,9 @@ class RealBleService implements BleService {
     // the reconnect cycle starts fresh.
     if (_isConnected) {
       _serviceReady = true;
-      debugPrint('[BLE] Service ready — writes enabled.');
+      LogService.instance.log('[BLE] Service ready — writes enabled.');
     } else {
-      debugPrint('[BLE] Discovery ended while disconnected — writes NOT enabled.');
+      LogService.instance.log('[BLE] Discovery ended while disconnected — writes NOT enabled.');
     }
   }
 
@@ -329,7 +330,7 @@ class RealBleService implements BleService {
   /// Fix: after any subscription failure on web, we call `discoverServices()`
   /// again to obtain fresh GATT handles before returning, so writes still work.
   Future<void> _subscribeToPpm(String deviceId) async {
-    debugPrint('[BLE] Subscribing to PPM notifications…');
+    LogService.instance.log('[BLE] Subscribing to PPM notifications…');
 
     // Try notifications first.
     try {
@@ -338,10 +339,10 @@ class RealBleService implements BleService {
         serviceUuid,
         ppmCharUuid,
       );
-      debugPrint('[BLE] PPM notifications subscribed successfully.');
+      LogService.instance.log('[BLE] PPM notifications subscribed successfully.');
       return;
     } catch (e) {
-      debugPrint('[BLE] subscribeNotifications failed: $e');
+      LogService.instance.log('[BLE] subscribeNotifications failed: $e');
     }
 
     // Fallback: try indications.
@@ -351,25 +352,25 @@ class RealBleService implements BleService {
         serviceUuid,
         ppmCharUuid,
       );
-      debugPrint('[BLE] PPM indications subscribed (fallback).');
+      LogService.instance.log('[BLE] PPM indications subscribed (fallback).');
       return;
     } catch (e) {
-      debugPrint('[BLE] subscribeIndications also failed: $e');
+      LogService.instance.log('[BLE] subscribeIndications also failed: $e');
     }
 
     // Both subscription attempts failed — the platform has likely invalidated
     // its internal GATT session (Chrome does this, WinRT does this too).
     // Re-discovering services gets fresh GATT handles so writes still work.
-    debugPrint('[BLE] Re-discovering services to refresh GATT handles after subscription failure…');
+    LogService.instance.log('[BLE] Re-discovering services to refresh GATT handles after subscription failure…');
     try {
       await UniversalBle.discoverServices(deviceId);
-      debugPrint('[BLE] GATT handles refreshed — writes will work without PPM notifications.');
+      LogService.instance.log('[BLE] GATT handles refreshed — writes will work without PPM notifications.');
     } catch (e) {
-      debugPrint('[BLE] Re-discovery failed: $e');
+      LogService.instance.log('[BLE] Re-discovery failed: $e');
     }
 
     _skipSubscription = true;
-    debugPrint(
+    LogService.instance.log(
       '[BLE] PPM auto-update unavailable.\n'
       'nRF Connect fix: add a CCCD descriptor (UUID 0x2902) to the PPM characteristic.',
     );
@@ -396,11 +397,11 @@ class RealBleService implements BleService {
 
       // Attempt 1: Write With Response.
       await UniversalBle.write(device.deviceId, serviceUuid, cmdCharUuid, packet);
-      debugPrint('[BLE] Write OK.');
+      LogService.instance.log('[BLE] Write OK.');
       await Future<void>.delayed(const Duration(milliseconds: 150));
       return true;
     } catch (e) {
-      debugPrint('[BLE] Write (with response) failed: $e — trying without response…');
+      LogService.instance.log('[BLE] Write (with response) failed: $e — trying without response…');
     }
 
     // Attempt 2: Write Without Response (for peripherals that support it).
@@ -410,11 +411,11 @@ class RealBleService implements BleService {
         device.deviceId, serviceUuid, cmdCharUuid, packet,
         withoutResponse: true,
       );
-      debugPrint('[BLE] Write Without Response OK.');
+      LogService.instance.log('[BLE] Write Without Response OK.');
       await Future<void>.delayed(const Duration(milliseconds: 150));
       return true;
     } catch (e) {
-      debugPrint('[BLE] All write attempts failed: $e');
+      LogService.instance.log('[BLE] All write attempts failed: $e');
       return false;
     }
   }
@@ -422,7 +423,7 @@ class RealBleService implements BleService {
 
   void _cleanUp() {
     UniversalBle.stopScan().catchError((Object e) {
-      debugPrint('[BLE] stopScan error (ignored): $e');
+      LogService.instance.log('[BLE] stopScan error (ignored): $e');
     });
 
     final device = _device;
@@ -434,7 +435,7 @@ class RealBleService implements BleService {
 
     if (device != null) {
       UniversalBle.disconnect(device.deviceId).catchError((Object e) {
-        debugPrint('[BLE] disconnect error (ignored): $e');
+        LogService.instance.log('[BLE] disconnect error (ignored): $e');
       });
     }
   }

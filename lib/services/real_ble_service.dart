@@ -113,7 +113,7 @@ class RealBleService implements BleService {
 
       LogService.instance.log('[BLE] PPM notification match found. Raw: $value');
       if (value.length >= 4) {
-        final ppm = value.buffer.asByteData().getFloat32(0, Endian.little);
+        final ppm = ByteData.sublistView(value).getFloat32(0, Endian.little);
         LogService.instance.log('[BLE] PPM parsed: $ppm');
         sensorData.updatePpm(ppm);
       } else {

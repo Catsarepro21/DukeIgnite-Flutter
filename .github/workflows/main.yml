@@ -283,7 +283,7 @@ jobs:
       - name: Determine Tag
         id: tag
         run: |
-          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}' | tr '+' '-')
           echo "VERSION=v$APP_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release

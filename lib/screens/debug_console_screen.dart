@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/log_service.dart';
+import 'dashboard_screen.dart';
 
 class DebugConsoleScreen extends StatefulWidget {
   const DebugConsoleScreen({super.key});
@@ -69,6 +70,17 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             icon: const Icon(Icons.delete_outline),
             onPressed: () => LogService.instance.clear(),
             tooltip: 'Clear logs',
+          ),
+          IconButton(
+            icon: const Icon(Icons.rocket_launch),
+            onPressed: () {
+              LogService.instance.log('[Debug] Bypassing connection for testing.');
+              // Push replacement so going back doesn't take them back to debug console instantly
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const DashboardScreen()),
+              );
+            },
+            tooltip: 'Bypass Connection (Test)',
           ),
         ],
       ),

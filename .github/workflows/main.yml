@@ -41,6 +41,9 @@ jobs:
           channel: "stable"
           cache: true
 
+      - name: Create .env file
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -76,6 +79,9 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Create .env file
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
       - name: Install Dependencies
         run: |
@@ -115,6 +121,10 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
+      - name: Create .env file
+        shell: bash
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
       - name: Install Dependencies
         run: flutter pub get
@@ -164,6 +174,9 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Create .env file
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -196,6 +209,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
+      - name: Create .env file
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
       - name: Install dependencies
         run: flutter pub get

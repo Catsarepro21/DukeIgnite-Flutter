@@ -79,11 +79,11 @@ class _TipsScreenState extends State<TipsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.auto_awesome, color: Colors.blueAccent),
-                            const SizedBox(width: 10),
-                            const Text(
+                            Icon(Icons.auto_awesome, color: Colors.blueAccent),
+                            SizedBox(width: 10),
+                            Text(
                               'AI Health Advisor',
                               style: TextStyle(
                                   color: Colors.white,

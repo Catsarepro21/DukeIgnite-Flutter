@@ -16,8 +16,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final TextEditingController _ssidController = TextEditingController();
-  final TextEditingController _passController = TextEditingController();
   SensorData? _sensorData;
   BleService? _bleService;
   String _version = '';
@@ -58,8 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _sensorData?.removeListener(_onConnectionChange);
-    _ssidController.dispose();
-    _passController.dispose();
     super.dispose();
   }
 
@@ -74,47 +70,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _sendWifiCredentials() async {
-    final bleService = _bleService;
-    if (bleService == null) return;
-    FocusScope.of(context).unfocus();
-    final ssid = _ssidController.text.trim();
-    final pass = _passController.text.trim(); // empty = open network
-
-    if (ssid.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the network SSID.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    try {
-      await bleService.setWifiCredentials(ssid, pass);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Credentials sent to sensor!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      _ssidController.clear();
-      _passController.clear();
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to send credentials: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
-  }
 
   String _formatPpm(double ppm) {
     if (ppm < 0.01) return ppm.toStringAsFixed(4);
@@ -250,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (context) => DebugConsoleScreen()),
+                            builder: (context) => const DebugConsoleScreen()),
                       );
                     }
                   },

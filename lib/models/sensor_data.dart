@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// Holds all real-time state from the BLE sensor and notifies listeners
 /// on any change. PPM is updated by [RealBleService] via BLE notifications —
@@ -15,6 +15,16 @@ class SensorData extends ChangeNotifier {
   int get volume => _volume;
   double get ppmThreshold => _ppmThreshold;
   int get lcdContrast => _lcdContrast;
+
+  Color get alertColor {
+    if (_ppm < 0.1) return Colors.greenAccent;
+    if (_ppm < _ppmThreshold) return Colors.orangeAccent;
+    return Colors.redAccent;
+  }
+
+  bool get ventilationWarning {
+    return _ppm >= _ppmThreshold;
+  }
 
   void setConnectionStatus(bool status) {
     if (_isConnected == status) return;

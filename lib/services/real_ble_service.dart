@@ -108,8 +108,8 @@ class RealBleService implements BleService {
       // LOG EVERYTHING for debugging iOS
       LogService.instance.log('[BLE] Notification received: ID=$charId size=${value.length}');
 
-      // Robust check: compare normalized strings (lowercase, no dashes)
-      if (_normalizeUuid(charId) != _normalizeUuid(ppmCharUuid)) return;
+      // Robust check: compare 16-bit short and 128-bit full UUIDs
+      if (!_uuidsMatch(charId, ppmCharUuid)) return;
 
       LogService.instance.log('[BLE] PPM notification match found. Raw: $value');
       if (value.length >= 4) {
@@ -289,7 +289,7 @@ class RealBleService implements BleService {
       bool foundService = false;
       for (final s in services) {
         LogService.instance.log('[BLE]   Service: ${s.uuid}');
-        if (_normalizeUuid(s.uuid) == _normalizeUuid(serviceUuid)) {
+        if (_uuidsMatch(s.uuid, serviceUuid)) {
           foundService = true;
           for (final c in s.characteristics) {
             LogService.instance.log('[BLE]     Char: ${c.uuid} props=${c.properties}');
@@ -444,5 +444,31 @@ class RealBleService implements BleService {
   /// iOS, Web, and Windows often format the same UUID differently.
   String _normalizeUuid(String uuid) {
     return uuid.toLowerCase().replaceAll('-', '').replaceAll('0x', '');
+  }
+
+  /// Checks if two UUIDs represent the same Bluetooth attribute.
+  /// Handles comparing a 16-bit short UUID (e.g. "eee1") with a full 128-bit UUID.
+  bool _uuidsMatch(String charId1, String charId2) {
+    String u1 = _normalizeUuid(charId1);
+    String u2 = _normalizeUuid(charId2);
+
+    if (u1 == u2) return true;
+
+    // Expand 16-bit to 128-bit using Bluetooth Base UUID: 0000xxxx-0000-1000-8000-00805F9B34FB
+    // Our normalized base is "0000xxxx00001000800000805f9b34fb"
+    if (u1.length == 4 && u2.length == 32) {
+      if (u2.startsWith('0000$u1')) return true;
+    } else if (u2.length == 4 && u1.length == 32) {
+      if (u1.startsWith('0000$u2')) return true;
+    }
+    
+    // Expand 32-bit to 128-bit
+    if (u1.length == 8 && u2.length == 32) {
+      if (u2.startsWith(u1)) return true;
+    } else if (u2.length == 8 && u1.length == 32) {
+      if (u1.startsWith(u2)) return true;
+    }
+
+    return false;
   }
 }

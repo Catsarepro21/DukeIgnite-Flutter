@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:universal_ble/universal_ble.dart' hide BleService;
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app_services.dart';
 import 'models/sensor_data.dart';
 import 'screens/scan_screen.dart';
 import 'services/ble_service.dart';
+import 'services/gemini_service.dart';
 
-void main() {
+void main() async {
   // Must be called before any Flutter plugin or platform channel is used,
   // including universal_ble's static initializer which sets up message handlers.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Increase BLE operation timeout globally — the default 10 s is too tight
-  // for discoverServices on slower peripherals (e.g. nRF Connect first connect).
-  UniversalBle.timeout = const Duration(seconds: 30);
+  // Try loading the Env file if it exists
+  try {
+    await dotenv.load(fileName: ".env");
+    GeminiService.instance.initialize();
+  } catch (e) {
+    debugPrint("No .env file found or failed to load: $e");
+  }
+
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();
   

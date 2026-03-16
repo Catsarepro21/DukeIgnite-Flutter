@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app_services.dart';
 import 'models/sensor_data.dart';
@@ -13,13 +12,8 @@ void main() async {
   // including universal_ble's static initializer which sets up message handlers.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Try loading the Env file if it exists
-  try {
-    await dotenv.load(fileName: ".env");
-    GeminiService.instance.initialize();
-  } catch (e) {
-    debugPrint("No .env file found or failed to load: $e");
-  }
+  // Initialize Gemini with --dart-define compiler flag instead of insecure .env file
+  GeminiService.instance.initialize();
 
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();

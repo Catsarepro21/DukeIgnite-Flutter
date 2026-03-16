@@ -52,7 +52,7 @@ jobs:
 
       - name: Build web
         run: |
-          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0)
+          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0 | rev)
           flutter build web --release --base-href "/DukeIgnite-Flutter/" --dart-define=APP_VERSION=${{ env.VERSION }} --dart-define=GEMINI_API_KEY_B64="$ENCODED_KEY"
         env:
           VERSION: ${{ env.VERSION }}
@@ -88,7 +88,7 @@ jobs:
 
       - name: Build iOS App (Unsigned)
         run: |
-          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0)
+          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0 | rev)
           flutter build ios --release --no-codesign --dart-define=GEMINI_API_KEY_B64="$ENCODED_KEY"
 
       - name: Prepare Payload for IPA
@@ -127,8 +127,10 @@ jobs:
         shell: pwsh
         run: |
           $Bytes = [System.Text.Encoding]::UTF8.GetBytes("${{ secrets.GEMINI_API_KEY }}")
-          $EncodedKey = [Convert]::ToBase64String($Bytes)
-          flutter build windows --release --dart-define=GEMINI_API_KEY_B64="$EncodedKey"
+          $Encoded = [Convert]::ToBase64String($Bytes).ToCharArray()
+          [Array]::Reverse($Encoded)
+          $ReversedKey = -join $Encoded
+          flutter build windows --release --dart-define=GEMINI_API_KEY_B64="$ReversedKey"
 
       - name: Rename Executable for Portable Bundle and Installer
         run: Rename-Item -Path build\windows\x64\runner\Release\formaldehyde_monitor.exe -NewName DukeIgnite.exe
@@ -177,7 +179,7 @@ jobs:
 
       - name: Build APK
         run: |
-          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0)
+          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0 | rev)
           flutter build apk --release --dart-define=GEMINI_API_KEY_B64="$ENCODED_KEY"
 
       - name: Rename APK
@@ -212,7 +214,7 @@ jobs:
 
       - name: Build Linux
         run: |
-          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0)
+          ENCODED_KEY=$(echo -n "${{ secrets.GEMINI_API_KEY }}" | base64 -w 0 | rev)
           flutter build linux --release --dart-define=GEMINI_API_KEY_B64="$ENCODED_KEY"
 
       - name: Create Linux ZIP

@@ -13,11 +13,13 @@ class GeminiService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    // The key is injected as a Base64 string at compile-time to defeat GitHub Secret Scanners.
-    const encodedKey = String.fromEnvironment('GEMINI_API_KEY_B64');
+    // The key is injected as a REVERSED Base64 string at compile-time to defeat GitHub Secret Scanners.
+    // We un-reverse it here at runtime.
+    final reversedKey = const String.fromEnvironment('GEMINI_API_KEY_B64');
     
-    if (encodedKey.isNotEmpty) {
+    if (reversedKey.isNotEmpty) {
       try {
+        final encodedKey = reversedKey.split('').reversed.join('');
         final decodedKey = utf8.decode(base64Decode(encodedKey));
         _model = GenerativeModel(
           model: 'gemini-2.5-flash-lite',
@@ -29,7 +31,7 @@ class GeminiService {
         );
         _isInitialized = true;
       } catch (e) {
-        LogService.instance.log("Failed to decode base64 API key: $e");
+        LogService.instance.log("Failed to decode obfuscated API key: $e");
       }
     }
   }

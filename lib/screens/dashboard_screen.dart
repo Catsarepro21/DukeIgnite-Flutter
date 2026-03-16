@@ -9,7 +9,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'debug_console_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/thingspeak_service.dart';
-import '../services/thingspeak_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,8 +27,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DateTime? _lastTapTime;
 
   // ThingSpeak State
-  final TextEditingController _channelIdController = TextEditingController();
-  final TextEditingController _apiKeyController = TextEditingController();
   List<ThingSpeakReading> _history = [];
   bool _isFetchingHistory = false;
 
@@ -49,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _initPackageInfo();
+    _fetchHistory(); // Auto-fetch on dashboard load
   }
 
   Future<void> _initPackageInfo() async {
@@ -71,8 +69,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _sensorData?.removeListener(_onDataOrConnectionChange);
     _ssidController.dispose();
     _passController.dispose();
-    _channelIdController.dispose();
-    _apiKeyController.dispose();
     super.dispose();
   }
 
@@ -119,14 +115,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchHistory() async {
-    final channelId = _channelIdController.text.trim();
-    if (channelId.isEmpty) return;
-
+    const channelId = '3238778';
     setState(() => _isFetchingHistory = true);
 
     final history = await ThingSpeakService.instance.fetchHistory(
       channelId: channelId,
-      apiKey: _apiKeyController.text.trim(),
+      // API Key is not needed for public channel, but if ever needed,
+      // it would be hardcoded here or provided via dart-define.
     );
 
     if (mounted) {
@@ -612,13 +607,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  if (_history.isEmpty)
+                  if (_isFetchingHistory && _history.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_history.isEmpty)
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 40),
                         child: Text(
-                          'No history loaded.\nEnter Channel ID below.',
+                          'No history data available.',
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -650,60 +651,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _channelIdController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Channel ID',
-                      labelStyle: const TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.blueAccent),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[850],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: _apiKeyController,
-                    obscureText: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Read API Key (Optional)',
-                      labelStyle: const TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.blueAccent),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[850],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _fetchHistory,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Update History'),
-                    ),
-                  ),
                 ],
               ),
             ),

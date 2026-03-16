@@ -61,6 +61,16 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
 
     try {
       switch (command) {
+        case 'help':
+          LogService.instance.log('[System] Available Commands:\n'
+              '  - ppm <val>: Set HCHO reading\n'
+              '  - threshold <val>: Set alarm limit\n'
+              '  - volume <0-100>: Set alarm volume\n'
+              '  - contrast <0-100>: Set LCD contrast\n'
+              '  - status <on|off>: Toggle connection UI\n'
+              '  - log <msg>: Print custom message\n'
+              '  - clear: Wipe console history');
+          break;
         case 'ppm':
           if (parts.length > 1) {
             final val = double.parse(parts[1]);
@@ -82,11 +92,30 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             LogService.instance.log('[Debug] Set Volume to $val');
           }
           break;
+        case 'contrast':
+          if (parts.length > 1) {
+            final val = int.parse(parts[1]);
+            sensorData.updateLcdContrast(val);
+            LogService.instance.log('[Debug] Set Contrast to $val');
+          }
+          break;
+        case 'status':
+          if (parts.length > 1) {
+            final val = parts[1] == 'on';
+            sensorData.setConnectionStatus(val);
+            LogService.instance.log('[Debug] Connection status set to $val');
+          }
+          break;
+        case 'log':
+          if (parts.length > 1) {
+            LogService.instance.log('[User] ${parts.sublist(1).join(' ')}');
+          }
+          break;
         case 'clear':
           LogService.instance.clear();
           break;
         default:
-          LogService.instance.log('[Error] Unknown command: $command');
+          LogService.instance.log('[Error] Unknown command: $command. Type "help" for list.');
       }
     } catch (e) {
       LogService.instance.log('[Error] Invalid value: $e');

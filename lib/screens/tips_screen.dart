@@ -84,7 +84,7 @@ class _TipsScreenState extends State<TipsScreen> {
                             Icon(Icons.auto_awesome, color: Colors.blueAccent),
                             SizedBox(width: 10),
                             Text(
-                              'Tips',
+                              'Live AI Advice',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -95,7 +95,7 @@ class _TipsScreenState extends State<TipsScreen> {
                         const SizedBox(height: 15),
                         Text(
                           _geminiTips.isEmpty 
-                              ? 'Tap below to generate personalized advice based on your live reading (${sensorData.ppm.toStringAsFixed(3)} PPM).'
+                              ? 'Tap below for advice based on your live reading (${sensorData.ppm.toStringAsFixed(3)} PPM).'
                               : _geminiTips,
                           style: const TextStyle(color: Colors.white70, fontSize: 16),
                         ),
@@ -105,7 +105,7 @@ class _TipsScreenState extends State<TipsScreen> {
                           icon: _isGenerating 
                             ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))
                             : const Icon(Icons.refresh),
-                          label: Text(_isGenerating ? 'Generating...' : 'Get Personalized Tips'),
+                          label: Text(_isGenerating ? 'Generating...' : 'Get Personalized Advice'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
@@ -125,12 +125,18 @@ class _TipsScreenState extends State<TipsScreen> {
               style: TextStyle(
                   color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
             const Text(
-              '• Keep the room ventilated.\n'
-              '• Monitor PPM levels regularly.\n'
-              '• Avoid prolonged exposure in high PPM areas.',
-              style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
+              'Formaldehyde (HCHO) is a common indoor air pollutant found in furniture, building materials, and cleaning products. Long-term exposure can lead to respiratory irritation and other health issues.',
+              style: TextStyle(color: Colors.white70, fontSize: 15),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              '• Ventilation: Ensure adequate airflow by opening windows for 15-30 minutes, especially during cleaning or after painting.\n'
+              '• Purification: Use air purifiers with activated carbon filters to effectively capture VOCs like formaldehyde.\n'
+              '• Monitoring: Keep an eye on PPM levels regularly to detect trends early.\n'
+              '• Source Control: Favor low-VOC materials when purchasing new furniture or carpets.',
+              style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
             ),
           ],
         ),

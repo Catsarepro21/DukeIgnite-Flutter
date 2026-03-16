@@ -1,6 +1,7 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'log_service.dart';
 
 class GeminiService {
   static final GeminiService instance = GeminiService._internal();
@@ -28,7 +29,7 @@ class GeminiService {
         );
         _isInitialized = true;
       } catch (e) {
-        print("Failed to decode base64 API key: $e");
+        LogService.instance.log("Failed to decode base64 API key: $e");
       }
     }
   }
@@ -40,10 +41,16 @@ class GeminiService {
     }
 
     final prompt = '''
-      You are an expert indoor air quality advisor.
-      Live HCHO reading: $ppm PPM.
-      Briefly explain health impact (safe is < 0.1 PPM) and provide 3 immediate, actionable tips. 
-      Professional tone. Bullet points only, no headers.
+      You are a real-time Formaldehyde (HCHO) air quality advisor. 
+      Your LIVE sensor reading is exactly $ppm PPM.
+      
+      RULES:
+      1. If $ppm is 0.000, simply state "Air quality is currently optimal. No detectable formaldehyde." and nothing else.
+      2. If $ppm is between 0.001 and 0.080, give 2 brief tips for maintaining these healthy levels.
+      3. If $ppm is > 0.080 PPM, provide 3 URGENT, actionable safety steps.
+      4. DO NOT explain what Formaldehyde is. 
+      5. DO NOT give general advice about ventilation unless levels are elevated.
+      6. Professional, concise tone. Bullet points only. Max 100 words.
     ''';
 
     try {

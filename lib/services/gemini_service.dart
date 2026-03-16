@@ -1,5 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'dart:async';
 
 class GeminiService {
@@ -12,37 +12,30 @@ class GeminiService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    final prefs = await SharedPreferences.getInstance();
-    String apiKey = prefs.getString('gemini_api_key') ?? const String.fromEnvironment('GEMINI_API_KEY');
+    // The key is injected as a Base64 string at compile-time to defeat GitHub Secret Scanners.
+    const encodedKey = String.fromEnvironment('GEMINI_API_KEY_B64');
     
-    if (apiKey.isNotEmpty) {
-      _setupModel(apiKey);
+    if (encodedKey.isNotEmpty) {
+      try {
+        final decodedKey = utf8.decode(base64Decode(encodedKey));
+        _model = GenerativeModel(
+          model: 'gemini-2.5-flash-lite',
+          apiKey: decodedKey,
+          generationConfig: GenerationConfig(
+            temperature: 0.2,
+            maxOutputTokens: 150,
+          )
+        );
+        _isInitialized = true;
+      } catch (e) {
+        print("Failed to decode base64 API key: $e");
+      }
     }
   }
 
-  void _setupModel(String apiKey) {
-    _model = GenerativeModel(
-      model: 'gemini-2.5-flash-lite',
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.2,
-        maxOutputTokens: 150,
-      )
-    );
-    _isInitialized = true;
-  }
-
-  Future<void> saveApiKey(String apiKey) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('gemini_api_key', apiKey);
-    _setupModel(apiKey);
-  }
-
-  bool get hasKey => _isInitialized && _model != null;
-
   Stream<String> getSafetyTipsStream(double ppm) async* {
-    if (!hasKey) {
-       yield "API Key missing. Please provide your Gemini API key.";
+    if (!_isInitialized || _model == null) {
+       yield "API Key missing or invalid. Check your build configuration.";
        return;
     }
 

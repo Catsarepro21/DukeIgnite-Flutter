@@ -124,13 +124,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Handle AI Flash Advice for alerts
     if (_sensorData!.ventilationWarning) {
-      // Only generate if PPM shifted significantly (±0.1) or first time alerting
+      // Logic for when to update flash advice:
+      // 1. If we aren't already generating one.
+      // 2. AND (If this is the FIRST alert [_lastAlertPpm == null], OR if the PPM shifted by > 0.1)
       if (!_isGeneratingFlash &&
           (_lastAlertPpm == null || (_sensorData!.ppm - _lastAlertPpm!).abs() > 0.1)) {
         _generateFlashAdvice(_sensorData!.ppm);
       }
     } else {
-      _lastAlertPpm = null; // Reset when safe
+      // Reset state when air is safe again
+      if (_lastAlertPpm != null) {
+        setState(() {
+          _lastAlertPpm = null;
+          _flashAdvice = "Open a door or window for your safety"; // Reset to default
+        });
+      }
     }
   }
 
@@ -273,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Expert Advice',
+                          'Personalized Tips',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 22,

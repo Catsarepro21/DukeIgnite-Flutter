@@ -42,16 +42,19 @@ class GeminiService {
     }
 
     final prompt = '''
-      You are a real-time Formaldehyde (HCHO) air quality advisor. 
-      Your LIVE sensor reading is exactly $ppm PPM.
+      You are a safety expert viewing a LIVE sensor reading from a room.
+      Reading: $ppm PPM of Formaldehyde (HCHO).
+      
+      TASK:
+      Based on this EXACT concentration, provide a medical-grade safety assessment. 
+      Use your knowledge of WHO, OSHA, and EPA standards to judge the risk.
       
       RULES:
-      1. If $ppm is 0.000, simply state "Air quality is currently optimal. No detectable formaldehyde." and nothing else.
-      2. If $ppm is between 0.001 and 0.080, give 2 brief tips for maintaining these healthy levels.
-      3. If $ppm is > 0.080 PPM, provide 3 URGENT, actionable safety steps.
-      4. DO NOT explain what Formaldehyde is. 
-      5. DO NOT give general advice about ventilation unless levels are elevated.
-      6. Professional, concise tone. Bullet points only. Max 100 words.
+      1. If the level is hazardous (above 0.08 PPM), be increasingly urgent.
+      2. If the level is EXTREME (above 2.0 PPM), prioritize immediate evacuation and professional remediation.
+      3. Provide 2-3 prioritized, actionable bullet points. 
+      4. DO NOT provide general definitions or history of VOCs.
+      5. Professional, punchy tone. Max 80 words total.
     ''';
 
     try {
@@ -69,18 +72,20 @@ class GeminiService {
   /// Returns a single, punchy safety sentence for the dashboard alert.
   /// Optimized for speed.
   Future<String> getFlashAdvice(double ppm) async {
-    if (!_isInitialized || _model == null) return "Open a window for safety.";
+    if (!_isInitialized || _model == null) return "Increased levels detected—ventilate now.";
 
     final prompt =
-        'Reading: $ppm PPM. Give 1 short, urgent safety sentence (max 10 words). '
-        'Example: "High levels—evacuation recommended!" '
-        'Just the sentence, no quotes.';
+        'Reading: $ppm PPM of Formaldehyde (HCHO). '
+        'Based on world health standards for this SPECIFIC concentration, '
+        'give 1 extremely short, punchy safety instruction (max 12 words). '
+        'If levels are extreme, be urgent and command evacuation. '
+        'Just the instruction, no quotes.';
 
     try {
       final response = await _model!.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? "Open a window for safety.";
+      return response.text?.trim() ?? "Increased levels detected—ventilate now.";
     } catch (e) {
-      return "Open a window for safety.";
+      return "Increased levels detected—ventilate now.";
     }
   }
 }

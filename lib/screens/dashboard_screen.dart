@@ -143,18 +143,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _generateFlashAdvice(double ppm) async {
+    if (!mounted) return;
+    
     setState(() {
       _isGeneratingFlash = true;
     });
 
-    final advice = await GeminiService.instance.getFlashAdvice(ppm);
-
-    if (mounted) {
-      setState(() {
-        _flashAdvice = advice;
-        _isGeneratingFlash = false;
-        _lastAlertPpm = ppm;
-      });
+    try {
+      final advice = await GeminiService.instance.getFlashAdvice(ppm);
+      if (mounted) {
+        setState(() {
+          _flashAdvice = advice;
+          _isGeneratingFlash = false;
+          _lastAlertPpm = ppm;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _flashAdvice = "Harmful levels—ventilate immediately";
+          _isGeneratingFlash = false;
+          _lastAlertPpm = ppm;
+        });
+      }
     }
   }
 

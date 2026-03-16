@@ -26,7 +26,7 @@ class GeminiService {
             apiKey: decodedKey,
             generationConfig: GenerationConfig(
               temperature: 0.2,
-              maxOutputTokens: 150,
+              maxOutputTokens: 250,
             ));
         _isInitialized = true;
       } catch (e) {
@@ -37,24 +37,35 @@ class GeminiService {
 
   Stream<String> getSafetyTipsStream(double ppm) async* {
     if (!_isInitialized || _model == null) {
-      yield "API Key missing or invalid. Check your build configuration.";
+      yield "AI Advisor requires an active internet connection and valid API key.";
       return;
     }
 
     final prompt = '''
-      You are a safety expert viewing a LIVE sensor reading from a room.
-      Reading: $ppm PPM of Formaldehyde (HCHO).
+      You are a specialized Medical Toxicologist and Environmental Safety Expert.
+      CURRENT FORMALDEHYDE (HCHO) READING: $ppm PPM.
       
       TASK:
-      Based on this EXACT concentration, provide a medical-grade safety assessment. 
-      Use your knowledge of WHO, OSHA, and EPA standards to judge the risk.
+      Analyze this specific concentration using WHO, OSHA, and EPA exposure limits.
       
-      RULES:
-      1. If the level is hazardous (above 0.08 PPM), be increasingly urgent.
-      2. If the level is EXTREME (above 2.0 PPM), prioritize immediate evacuation and professional remediation.
-      3. Provide 2-3 prioritized, actionable bullet points. 
-      4. DO NOT provide general definitions or history of VOCs.
-      5. Professional, punchy tone. Max 80 words total.
+      INTELLECTUAL EVALUATION:
+      - At $ppm PPM, what are the immediate physiological risks?
+      - Is this concentration considered "Safe", "Unhealthy", "Hazardous", or "Immediately Dangerous to Life and Health (IDLH)"?
+      
+      URGENCY RULES:
+      - Under 0.08 PPM: Focus on long-term air quality maintenance.
+      - 0.08 - 0.50 PPM: Immediate ventilation and source identification.
+      - 0.50 - 2.00 PPM: High risk. Evacuate children/sensitive individuals. Full ventilation.
+      - Above 2.00 PPM: EXTREME DANGER. Recommend immediate evacuation and hazmat/professional evaluation. Be blunt and authoritative.
+      
+      FORMAT:
+      1. One bold risk level assessment.
+      2. 3 highly specific, prioritized safety actions based on $ppm PPM.
+      
+      STRICT LIMITS:
+      - Max 100 words.
+      - No general history, no definitions. 
+      - If $ppm is 0.000, praise the perfect air.
     ''';
 
     try {
@@ -65,27 +76,27 @@ class GeminiService {
         }
       }
     } catch (e) {
-      yield "Error connecting to AI Provider: $e";
+      yield "AI Service unavailable: $e";
     }
   }
 
   /// Returns a single, punchy safety sentence for the dashboard alert.
-  /// Optimized for speed.
+  /// Optimized for extreme reactivity and awareness.
   Future<String> getFlashAdvice(double ppm) async {
-    if (!_isInitialized || _model == null) return "Increased levels detected—ventilate now.";
+    if (!_isInitialized || _model == null) return "High levels detected. Please ventilate.";
 
     final prompt =
-        'Reading: $ppm PPM of Formaldehyde (HCHO). '
-        'Based on world health standards for this SPECIFIC concentration, '
-        'give 1 extremely short, punchy safety instruction (max 12 words). '
-        'If levels are extreme, be urgent and command evacuation. '
-        'Just the instruction, no quotes.';
+        'Reading: $ppm PPM of HCHO. '
+        'Judge the danger level (WHO/OSHA). '
+        'Provide ONE single, ultra-short safety command (max 8 words). '
+        'If levels are > 2.0 PPM, command immediate evacuation in all caps. '
+        'No quotes, just the command.';
 
     try {
       final response = await _model!.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ?? "Increased levels detected—ventilate now.";
+      return response.text?.trim() ?? "High levels detected. Please ventilate.";
     } catch (e) {
-      return "Increased levels detected—ventilate now.";
+      return "High levels detected. Please ventilate.";
     }
   }
 }

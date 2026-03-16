@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class NotificationService {
   NotificationService._internal();
@@ -27,13 +28,15 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        // Handle notification click if needed
-        debugPrint("Notification clicked: ${details.payload}");
-      },
-    );
+    if (!kIsWeb) {
+      await _localNotifications.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+          // Handle notification click if needed
+          debugPrint("Notification clicked: ${details.payload}");
+        },
+      );
+    }
 
     _isInitialized = true;
     debugPrint("[NotificationService] Initialized");
@@ -67,12 +70,14 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
-      0,
-      '⚠️ HIGH FORMALDEHYDE ALERT',
-      'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
-      platformDetails,
-      payload: 'high_ppm_alert',
-    );
+    if (!kIsWeb) {
+      await _localNotifications.show(
+        0,
+        '⚠️ HIGH FORMALDEHYDE ALERT',
+        'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
+        platformDetails,
+        payload: 'high_ppm_alert',
+      );
+    }
   }
 }

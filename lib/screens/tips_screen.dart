@@ -118,7 +118,7 @@ class _TipsScreenState extends State<TipsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Icon(Icons.auto_awesome, color: Colors.blueAccent),
                             SizedBox(width: 10),

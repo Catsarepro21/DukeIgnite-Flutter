@@ -85,7 +85,7 @@ jobs:
           pod install
 
       - name: Build iOS App (Unsigned)
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
 
       - name: Prepare Payload for IPA
         working-directory: build/ios/iphoneos
@@ -120,7 +120,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows App
-        run: flutter build windows --release
+        run: flutter build windows --release --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
 
       - name: Rename Executable for Portable Bundle and Installer
         run: Rename-Item -Path build\windows\x64\runner\Release\formaldehyde_monitor.exe -NewName DukeIgnite.exe
@@ -168,7 +168,7 @@ jobs:
         run: flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
 
       - name: Rename APK
         run: mv build/app/outputs/flutter-apk/app-release.apk DukeIgnite_Android.apk
@@ -201,7 +201,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Linux
-        run: flutter build linux --release
+        run: flutter build linux --release --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
 
       - name: Create Linux ZIP
         run: |

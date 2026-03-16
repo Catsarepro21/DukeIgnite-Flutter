@@ -22,9 +22,9 @@ class GeminiService {
       try {
         final encodedKey = reversedKey.split('').reversed.join('');
         final decodedKey = utf8.decode(base64Decode(encodedKey));
-        // Use Gemini 2.5 Flash - latest stable model for 2026.
+        // Use Gemini 3.1 Flash-Lite - March 2026 release.
         _model = GenerativeModel(
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.1-flash-lite',
             apiKey: decodedKey,
             generationConfig: GenerationConfig(
               temperature: 0.4, // Adjusted for better flow

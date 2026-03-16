@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/notification_service.dart';
 
 /// Holds all real-time state from the BLE sensor and notifies listeners
 /// on any change. PPM is updated by [RealBleService] via BLE notifications —
@@ -10,6 +11,7 @@ class SensorData extends ChangeNotifier {
   int _volume = 50;
   double _ppmThreshold = 0.5; // ppm alarm threshold (0.0–5.0)
   int _lcdContrast = 50; // LCD contrast (0–100)
+  DateTime? _lastNotificationTime;
 
   bool get isConnected => _isConnected || _isBypassMode;
   bool get isBypassMode => _isBypassMode;
@@ -44,6 +46,17 @@ class SensorData extends ChangeNotifier {
 
   void updatePpm(double ppm) {
     _ppm = ppm;
+
+    // Check for threshold breach and send notification
+    if (_ppm >= _ppmThreshold && _isConnected) {
+      final now = DateTime.now();
+      if (_lastNotificationTime == null ||
+          now.difference(_lastNotificationTime!) > const Duration(minutes: 5)) {
+        _lastNotificationTime = now;
+        NotificationService.instance.showHighPpmAlert(_ppm);
+      }
+    }
+
     notifyListeners();
   }
 

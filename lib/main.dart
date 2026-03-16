@@ -6,14 +6,16 @@ import 'models/sensor_data.dart';
 import 'screens/scan_screen.dart';
 import 'services/ble_service.dart';
 import 'services/gemini_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   // Must be called before any Flutter plugin or platform channel is used,
   // including universal_ble's static initializer which sets up message handlers.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Gemini Service (loads from dart-define with obfuscation)
+  // Initialize Services
   await GeminiService.instance.initialize();
+  await NotificationService.instance.initialize();
 
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();

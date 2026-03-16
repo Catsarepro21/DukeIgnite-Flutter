@@ -332,7 +332,7 @@ jobs:
             * **Windows Installer:** [Download DukeIgnite_Installer.exe](https://github.com/Catsarepro21/DukeIgnite-Flutter/releases/download/${{ steps.tag.outputs.VERSION }}/DukeIgnite_Installer.exe)
             
             **Setup Instructions**
-            1. **Launch:** Double click the downloaded installer.
+            1. **Launch:** Double click the downloaded .exe installer.
             2. **SmartScreen:** If Microsoft SmartScreen appears, click "More info" and "Run anyway".
             3. **Install:** Follow the setup wizard to install the app and create a desktop shortcut.
             

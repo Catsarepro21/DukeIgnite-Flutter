@@ -52,7 +52,7 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
 
   void _handleCommand(String input) {
     if (input.trim().isEmpty) return;
-    
+
     final parts = input.trim().toLowerCase().split(' ');
     final command = parts[0];
     final sensorData = Provider.of<SensorData>(context, listen: false);
@@ -115,7 +115,8 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
           LogService.instance.clear();
           break;
         default:
-          LogService.instance.log('[Error] Unknown command: $command. Type "help" for list.');
+          LogService.instance
+              .log('[Error] Unknown command: $command. Type "help" for list.');
       }
     } catch (e) {
       LogService.instance.log('[Error] Invalid value: $e');
@@ -153,9 +154,11 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
           IconButton(
             icon: const Icon(Icons.rocket_launch),
             onPressed: () {
-              LogService.instance.log('[Debug] Bypassing connection for testing.');
+              LogService.instance
+                  .log('[Debug] Bypassing connection for testing.');
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const DashboardScreen()),
               );
             },
             tooltip: 'Bypass Connection (Test)',
@@ -190,12 +193,17 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Text('>', style: TextStyle(color: Colors.greenAccent, fontFamily: 'Courier')),
+                const Text('>',
+                    style: TextStyle(
+                        color: Colors.greenAccent, fontFamily: 'Courier')),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _commandController,
-                    style: const TextStyle(color: Colors.white, fontFamily: 'Courier', fontSize: 14),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Courier',
+                        fontSize: 14),
                     decoration: const InputDecoration(
                       hintText: 'Enter command (ppm 0.1)...',
                       hintStyle: TextStyle(color: Colors.white24),
@@ -212,7 +220,9 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             ),
           ),
           // Bottom safe area padding
-          Container(height: MediaQuery.of(context).padding.bottom, color: Colors.grey[900]),
+          Container(
+              height: MediaQuery.of(context).padding.bottom,
+              color: Colors.grey[900]),
         ],
       ),
     );

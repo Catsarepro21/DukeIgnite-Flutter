@@ -33,7 +33,7 @@ const String cmdCharUuid = '0000EEE2-0000-1000-8000-00805F9B34FB';
 const int _cmdVolume = 0x01;
 const int _cmdWifi = 0x02;
 const int _cmdThreshold = 0x03; // [0x03, low_byte, high_byte] = ppm uint16 LE
-const int _cmdContrast = 0x04;  // [0x04, contrast 0-100]
+const int _cmdContrast = 0x04; // [0x04, contrast 0-100]
 
 // ---------------------------------------------------------------------------
 
@@ -69,9 +69,9 @@ class RealBleService implements BleService {
         '[BLE] Connection change: deviceId=$deviceId '
         'connected=$isConnected error=$error',
       );
-      
+
       _isConnected = isConnected;
-      
+
       if (isConnected) {
         _reconnectTimer?.cancel();
         sensorData.setConnectionStatus(true);
@@ -79,17 +79,19 @@ class RealBleService implements BleService {
         _serviceReady = false;
         _skipSubscription = false;
         LogService.instance.log('[BLE] Disconnected — flags cleared.');
-        
+
         if (!_intentionalDisconnect) {
-          LogService.instance.log('[BLE] Unexpected disconnect. Attempting auto-reconnect in background...');
+          LogService.instance.log(
+              '[BLE] Unexpected disconnect. Attempting auto-reconnect in background...');
           // Try connecting again immediately
           _connect(_device!);
-          
+
           // Give it 5 seconds to reconnect before notifying UI
           _reconnectTimer?.cancel();
           _reconnectTimer = Timer(const Duration(seconds: 5), () {
             if (!_isConnected && _device != null) {
-              LogService.instance.log('[BLE] Auto-reconnect failed. Notifying UI of disconnect.');
+              LogService.instance.log(
+                  '[BLE] Auto-reconnect failed. Notifying UI of disconnect.');
               sensorData.setConnectionStatus(false);
             }
           });
@@ -104,14 +106,16 @@ class RealBleService implements BleService {
     UniversalBle.onValueChange =
         (String deviceId, String charId, Uint8List value, int? _) {
       if (_device?.deviceId != deviceId) return;
-      
+
       // LOG EVERYTHING for debugging iOS
-      LogService.instance.log('[BLE] Notification received: ID=$charId size=${value.length}');
+      LogService.instance
+          .log('[BLE] Notification received: ID=$charId size=${value.length}');
 
       // Robust check: compare 16-bit short and 128-bit full UUIDs
       if (!_uuidsMatch(charId, ppmCharUuid)) return;
 
-      LogService.instance.log('[BLE] PPM notification match found. Raw: $value');
+      LogService.instance
+          .log('[BLE] PPM notification match found. Raw: $value');
       if (value.length >= 4) {
         final ppm = ByteData.sublistView(value).getFloat32(0, Endian.little);
         LogService.instance.log('[BLE] PPM parsed: $ppm');
@@ -142,7 +146,8 @@ class RealBleService implements BleService {
       );
       if (device.name == targetDeviceName && !_isConnecting) {
         _isConnecting = true;
-        LogService.instance.log('[BLE] Target found — stopping scan and connecting.');
+        LogService.instance
+            .log('[BLE] Target found — stopping scan and connecting.');
         UniversalBle.stopScan();
         _connect(device);
       }
@@ -173,15 +178,18 @@ class RealBleService implements BleService {
   @override
   Future<void> setVolume(int volume) async {
     if (!_isConnected || _device == null) {
-      LogService.instance.log('[BLE] setVolume($volume) skipped — not connected.');
+      LogService.instance
+          .log('[BLE] setVolume($volume) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      LogService.instance.log('[BLE] setVolume($volume) skipped — discovery not complete yet.');
+      LogService.instance.log(
+          '[BLE] setVolume($volume) skipped — discovery not complete yet.');
       return;
     }
     final packet = Uint8List.fromList([_cmdVolume, volume.clamp(0, 100)]);
-    LogService.instance.log('[BLE] setVolume($volume) → writing packet $packet');
+    LogService.instance
+        .log('[BLE] setVolume($volume) → writing packet $packet');
     final ok = await _writeCommand(packet);
     if (ok) sensorData.updateVolume(volume);
   }
@@ -189,11 +197,13 @@ class RealBleService implements BleService {
   @override
   Future<void> setWifiCredentials(String ssid, String pass) async {
     if (!_isConnected || _device == null) {
-      LogService.instance.log('[BLE] setWifiCredentials() skipped — not connected.');
+      LogService.instance
+          .log('[BLE] setWifiCredentials() skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      LogService.instance.log('[BLE] setWifiCredentials() skipped — discovery not complete yet.');
+      LogService.instance.log(
+          '[BLE] setWifiCredentials() skipped — discovery not complete yet.');
       return;
     }
     // Build packet: [0x02, ...ssidBytes, 0x00, ...passBytes]
@@ -210,11 +220,13 @@ class RealBleService implements BleService {
   @override
   Future<void> setPpmThreshold(double ppm) async {
     if (!_isConnected || _device == null) {
-      LogService.instance.log('[BLE] setPpmThreshold($ppm) skipped — not connected.');
+      LogService.instance
+          .log('[BLE] setPpmThreshold($ppm) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      LogService.instance.log('[BLE] setPpmThreshold($ppm) skipped — discovery not complete yet.');
+      LogService.instance.log(
+          '[BLE] setPpmThreshold($ppm) skipped — discovery not complete yet.');
       return;
     }
     final clamped = ppm.clamp(0.0, 5.0);
@@ -230,11 +242,13 @@ class RealBleService implements BleService {
   @override
   Future<void> setLcdContrast(int contrast) async {
     if (!_isConnected || _device == null) {
-      LogService.instance.log('[BLE] setLcdContrast($contrast) skipped — not connected.');
+      LogService.instance
+          .log('[BLE] setLcdContrast($contrast) skipped — not connected.');
       return;
     }
     if (!_serviceReady) {
-      LogService.instance.log('[BLE] setLcdContrast($contrast) skipped — discovery not complete yet.');
+      LogService.instance.log(
+          '[BLE] setLcdContrast($contrast) skipped — discovery not complete yet.');
       return;
     }
     final clamped = contrast.clamp(0, 100);
@@ -261,7 +275,8 @@ class RealBleService implements BleService {
       await UniversalBle.connect(device.deviceId);
       // connect() completes after onConnectionChange fires with isConnected=true,
       // which has already triggered UI navigation. Now run discovery.
-      LogService.instance.log('[BLE] connect() returned — discovering services…');
+      LogService.instance
+          .log('[BLE] connect() returned — discovering services…');
       await _discoverAndSubscribe();
     } catch (e) {
       LogService.instance.log('[BLE] _connect() ERROR: $e');
@@ -274,16 +289,19 @@ class RealBleService implements BleService {
 
     try {
       var services = await UniversalBle.discoverServices(device.deviceId);
-      LogService.instance.log('[BLE] Discovered ${services.length} service(s).');
+      LogService.instance
+          .log('[BLE] Discovered ${services.length} service(s).');
 
       // nRF Connect sometimes needs a moment to make its GATT server
       // available after a connection. Retry once if we get an empty list.
       if (services.isEmpty && _isConnected) {
-        LogService.instance.log('[BLE] 0 services found — retrying after 1.5 s…');
+        LogService.instance
+            .log('[BLE] 0 services found — retrying after 1.5 s…');
         await Future<void>.delayed(const Duration(milliseconds: 1500));
         if (!_isConnected) return; // Disconnected during delay.
         services = await UniversalBle.discoverServices(device.deviceId);
-        LogService.instance.log('[BLE] Retry discovered ${services.length} service(s).');
+        LogService.instance
+            .log('[BLE] Retry discovered ${services.length} service(s).');
       }
 
       bool foundService = false;
@@ -292,19 +310,22 @@ class RealBleService implements BleService {
         if (_uuidsMatch(s.uuid, serviceUuid)) {
           foundService = true;
           for (final c in s.characteristics) {
-            LogService.instance.log('[BLE]     Char: ${c.uuid} props=${c.properties}');
+            LogService.instance
+                .log('[BLE]     Char: ${c.uuid} props=${c.properties}');
           }
           if (!_skipSubscription) {
             await _subscribeToPpm(device.deviceId);
           } else {
-            LogService.instance.log('[BLE] Skipping subscription (previously caused GATT invalidation).');
+            LogService.instance.log(
+                '[BLE] Skipping subscription (previously caused GATT invalidation).');
           }
           break;
         }
       }
 
       if (!foundService) {
-        LogService.instance.log('[BLE] WARNING: Target service not found! Is the nRF Connect GATT Server ON?');
+        LogService.instance.log(
+            '[BLE] WARNING: Target service not found! Is the nRF Connect GATT Server ON?');
       }
     } catch (e) {
       LogService.instance.log('[BLE] _discoverAndSubscribe() ERROR: $e');
@@ -317,7 +338,8 @@ class RealBleService implements BleService {
       _serviceReady = true;
       LogService.instance.log('[BLE] Service ready — writes enabled.');
     } else {
-      LogService.instance.log('[BLE] Discovery ended while disconnected — writes NOT enabled.');
+      LogService.instance.log(
+          '[BLE] Discovery ended while disconnected — writes NOT enabled.');
     }
   }
 
@@ -339,7 +361,8 @@ class RealBleService implements BleService {
         serviceUuid,
         ppmCharUuid,
       );
-      LogService.instance.log('[BLE] PPM notifications subscribed successfully.');
+      LogService.instance
+          .log('[BLE] PPM notifications subscribed successfully.');
       return;
     } catch (e) {
       LogService.instance.log('[BLE] subscribeNotifications failed: $e');
@@ -361,10 +384,12 @@ class RealBleService implements BleService {
     // Both subscription attempts failed — the platform has likely invalidated
     // its internal GATT session (Chrome does this, WinRT does this too).
     // Re-discovering services gets fresh GATT handles so writes still work.
-    LogService.instance.log('[BLE] Re-discovering services to refresh GATT handles after subscription failure…');
+    LogService.instance.log(
+        '[BLE] Re-discovering services to refresh GATT handles after subscription failure…');
     try {
       await UniversalBle.discoverServices(deviceId);
-      LogService.instance.log('[BLE] GATT handles refreshed — writes will work without PPM notifications.');
+      LogService.instance.log(
+          '[BLE] GATT handles refreshed — writes will work without PPM notifications.');
     } catch (e) {
       LogService.instance.log('[BLE] Re-discovery failed: $e');
     }
@@ -396,19 +421,24 @@ class RealBleService implements BleService {
       }
 
       // Attempt 1: Write With Response.
-      await UniversalBle.write(device.deviceId, serviceUuid, cmdCharUuid, packet);
+      await UniversalBle.write(
+          device.deviceId, serviceUuid, cmdCharUuid, packet);
       LogService.instance.log('[BLE] Write OK.');
       await Future<void>.delayed(const Duration(milliseconds: 150));
       return true;
     } catch (e) {
-      LogService.instance.log('[BLE] Write (with response) failed: $e — trying without response…');
+      LogService.instance.log(
+          '[BLE] Write (with response) failed: $e — trying without response…');
     }
 
     // Attempt 2: Write Without Response (for peripherals that support it).
     if (!_isConnected) return false;
     try {
       await UniversalBle.write(
-        device.deviceId, serviceUuid, cmdCharUuid, packet,
+        device.deviceId,
+        serviceUuid,
+        cmdCharUuid,
+        packet,
         withoutResponse: true,
       );
       LogService.instance.log('[BLE] Write Without Response OK.');
@@ -419,7 +449,6 @@ class RealBleService implements BleService {
       return false;
     }
   }
-
 
   void _cleanUp() {
     UniversalBle.stopScan().catchError((Object e) {
@@ -461,7 +490,7 @@ class RealBleService implements BleService {
     } else if (u2.length == 4 && u1.length == 32) {
       if (u1.startsWith('0000$u2')) return true;
     }
-    
+
     // Expand 32-bit to 128-bit
     if (u1.length == 8 && u2.length == 32) {
       if (u2.startsWith(u1)) return true;

@@ -64,7 +64,8 @@ class _ScanScreenState extends State<ScanScreen> {
   void _onConnectionChange() {
     if (!mounted || _sensorData == null) return;
     if (_sensorData!.isConnected) {
-      LogService.instance.log('[ScanScreen] Device connected — navigating to Dashboard.');
+      LogService.instance
+          .log('[ScanScreen] Device connected — navigating to Dashboard.');
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
@@ -108,7 +109,8 @@ class _ScanScreenState extends State<ScanScreen> {
         allGranted = statuses[Permission.bluetooth]?.isGranted ?? false;
       } else {
         final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-        final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
+        final connectOk =
+            statuses[Permission.bluetoothConnect]?.isGranted ?? false;
         final locationOk = statuses[Permission.location]?.isGranted ?? false;
         allGranted = scanOk && connectOk && locationOk;
       }
@@ -119,7 +121,8 @@ class _ScanScreenState extends State<ScanScreen> {
               ? 'Bluetooth permission is required.\nGo to Settings → Privacy → Bluetooth.'
               : 'Bluetooth & location permissions are required.';
         });
-        LogService.instance.log('[ScanScreen] Permissions not granted — aborting scan.');
+        LogService.instance
+            .log('[ScanScreen] Permissions not granted — aborting scan.');
         return;
       }
     }
@@ -178,7 +181,7 @@ class _ScanScreenState extends State<ScanScreen> {
               ],
               const SizedBox(height: 40),
               if (!_isScanning)
-                 ElevatedButton(
+                ElevatedButton(
                   onPressed: _startScan,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
@@ -197,8 +200,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
               if (_isScanning)
                 const CircularProgressIndicator(
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
                 ),
             ],
           ),
@@ -222,8 +224,9 @@ class _ScanScreenState extends State<ScanScreen> {
                 GestureDetector(
                   onTap: () {
                     final now = DateTime.now();
-                    if (_lastTapTime == null || 
-                        now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
+                    if (_lastTapTime == null ||
+                        now.difference(_lastTapTime!) >
+                            const Duration(seconds: 2)) {
                       _debugTapCount = 1;
                     } else {
                       _debugTapCount++;
@@ -234,7 +237,8 @@ class _ScanScreenState extends State<ScanScreen> {
                       _debugTapCount = 0;
                       Navigator.of(context).pop(); // Close dialog
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const DebugConsoleScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const DebugConsoleScreen()),
                       );
                     }
                   },

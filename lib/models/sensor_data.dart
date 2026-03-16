@@ -8,7 +8,7 @@ class SensorData extends ChangeNotifier {
   double _ppm = 0.0;
   int _volume = 50;
   double _ppmThreshold = 0.5; // ppm alarm threshold (0.0–5.0)
-  int _lcdContrast = 50;   // LCD contrast (0–100)
+  int _lcdContrast = 50; // LCD contrast (0–100)
 
   bool get isConnected => _isConnected;
   double get ppm => _ppm;

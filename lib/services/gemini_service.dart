@@ -12,23 +12,22 @@ class GeminiService {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     // The key is injected as a REVERSED Base64 string at compile-time to defeat GitHub Secret Scanners.
     // We un-reverse it here at runtime.
-    final reversedKey = const String.fromEnvironment('GEMINI_API_KEY_B64');
-    
+    const reversedKey = String.fromEnvironment('GEMINI_API_KEY_B64');
+
     if (reversedKey.isNotEmpty) {
       try {
         final encodedKey = reversedKey.split('').reversed.join('');
         final decodedKey = utf8.decode(base64Decode(encodedKey));
         _model = GenerativeModel(
-          model: 'gemini-2.5-flash-lite',
-          apiKey: decodedKey,
-          generationConfig: GenerationConfig(
-            temperature: 0.2,
-            maxOutputTokens: 150,
-          )
-        );
+            model: 'gemini-2.5-flash-lite',
+            apiKey: decodedKey,
+            generationConfig: GenerationConfig(
+              temperature: 0.2,
+              maxOutputTokens: 150,
+            ));
         _isInitialized = true;
       } catch (e) {
         LogService.instance.log("Failed to decode obfuscated API key: $e");
@@ -38,8 +37,8 @@ class GeminiService {
 
   Stream<String> getSafetyTipsStream(double ppm) async* {
     if (!_isInitialized || _model == null) {
-       yield "API Key missing or invalid. Check your build configuration.";
-       return;
+      yield "API Key missing or invalid. Check your build configuration.";
+      return;
     }
 
     final prompt = '''
@@ -56,7 +55,8 @@ class GeminiService {
     ''';
 
     try {
-      await for (final chunk in _model!.generateContentStream([Content.text(prompt)])) {
+      await for (final chunk
+          in _model!.generateContentStream([Content.text(prompt)])) {
         if (chunk.text != null && chunk.text!.isNotEmpty) {
           yield chunk.text!;
         }

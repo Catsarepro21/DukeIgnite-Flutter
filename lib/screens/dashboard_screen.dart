@@ -116,7 +116,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-
   String _formatPpm(double ppm) {
     if (ppm < 0.01) return ppm.toStringAsFixed(4);
     if (ppm < 0.1) return ppm.toStringAsFixed(3);
@@ -163,7 +162,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E88E5), Color(0xFF1565C0)], // Blue gradient
+                    colors: [
+                      Color(0xFF1E88E5),
+                      Color(0xFF1565C0)
+                    ], // Blue gradient
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -351,8 +353,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Alarm above ${sensorData.ppmThreshold} ppm',
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       const SizedBox(height: 10),
                       SliderTheme(
@@ -367,7 +369,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           min: 0.0,
                           max: 5.0,
                           divisions: 100, // 0.05 ppm increments
-                          label: '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
+                          label:
+                              '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
                           onChanged: (val) {
                             sensorData.updatePpmThreshold(val);
                           },
@@ -438,7 +441,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
             const SizedBox(height: 30),
-            
+
             // Sensor Wi-Fi Setup Card (Static, no Consumer needed)
             Container(
               padding: const EdgeInsets.all(24),

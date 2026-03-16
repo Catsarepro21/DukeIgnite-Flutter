@@ -73,7 +73,8 @@ class _TipsScreenState extends State<TipsScreen> {
               builder: (context, sensorData, child) {
                 return Card(
                   color: Colors.grey[900],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -94,18 +95,27 @@ class _TipsScreenState extends State<TipsScreen> {
                         ),
                         const SizedBox(height: 15),
                         Text(
-                          _geminiTips.isEmpty 
+                          _geminiTips.isEmpty
                               ? 'Tap below for advice based on your live reading (${sensorData.ppm.toStringAsFixed(3)} PPM).'
                               : _geminiTips,
-                          style: const TextStyle(color: Colors.white70, fontSize: 16),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 16),
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
-                          onPressed: _isGenerating ? null : () => _generateTips(sensorData.ppm),
-                          icon: _isGenerating 
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))
-                            : const Icon(Icons.refresh),
-                          label: Text(_isGenerating ? 'Generating...' : 'Get Personalized Advice'),
+                          onPressed: _isGenerating
+                              ? null
+                              : () => _generateTips(sensorData.ppm),
+                          icon: _isGenerating
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white54))
+                              : const Icon(Icons.refresh),
+                          label: Text(_isGenerating
+                              ? 'Generating...'
+                              : 'Get Personalized Advice'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
@@ -123,7 +133,9 @@ class _TipsScreenState extends State<TipsScreen> {
             const Text(
               'Standard Safety Guidelines',
               style: TextStyle(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             const Text(
@@ -136,7 +148,8 @@ class _TipsScreenState extends State<TipsScreen> {
               '• Purification: Use air purifiers with activated carbon filters to effectively capture VOCs like formaldehyde.\n'
               '• Monitoring: Keep an eye on PPM levels regularly to detect trends early.\n'
               '• Source Control: Favor low-VOC materials when purchasing new furniture or carpets.',
-              style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
+              style:
+                  TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
             ),
           ],
         ),

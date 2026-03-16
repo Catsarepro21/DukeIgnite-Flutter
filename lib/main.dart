@@ -12,12 +12,12 @@ void main() async {
   // including universal_ble's static initializer which sets up message handlers.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Gemini Service (loads from SharedPreferences or dart-define)
+  // Initialize Gemini Service (loads from dart-define with obfuscation)
   await GeminiService.instance.initialize();
 
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();
-  
+
   // The BleService is determined by the getBleService function and provided.
   final bleService = getBleService(sensorData);
 
@@ -44,7 +44,7 @@ class FormaldehydeApp extends StatelessWidget {
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.black,
-        fontFamily: 'Inter', 
+        fontFamily: 'Inter',
       ),
       home: const ScanScreen(),
     );

@@ -35,10 +35,14 @@ class GeminiService {
       Keep the tone helpful and professional. Do not use markdown headers, just bullet points.
     ''';
 
-    yield* _model!.generateContentStream([Content.text(prompt)])
-        .map((response) => response.text ?? '')
-        .handleError((error) {
-           return "Error generating tips: \$error";
-        });
+    try {
+      await for (final chunk in _model!.generateContentStream([Content.text(prompt)])) {
+        if (chunk.text != null && chunk.text!.isNotEmpty) {
+          yield chunk.text!;
+        }
+      }
+    } catch (e) {
+      yield "Error connecting to AI Provider: $e";
+    }
   }
 }

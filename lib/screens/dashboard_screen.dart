@@ -144,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Dashboard v$_version'),
+        title: const Text('Sensor Dashboard'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

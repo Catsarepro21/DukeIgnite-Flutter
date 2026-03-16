@@ -12,8 +12,8 @@ void main() async {
   // including universal_ble's static initializer which sets up message handlers.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Gemini with --dart-define compiler flag instead of insecure .env file
-  GeminiService.instance.initialize();
+  // Initialize Gemini Service (loads from SharedPreferences or dart-define)
+  await GeminiService.instance.initialize();
 
   // The SensorData is created once and provided to the entire app.
   final sensorData = SensorData();

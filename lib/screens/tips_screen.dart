@@ -17,6 +17,11 @@ class _TipsScreenState extends State<TipsScreen> {
   void _generateTips(double currentPpm) {
     if (_isGenerating) return;
 
+    if (!GeminiService.instance.hasKey) {
+       _promptForApiKey(currentPpm);
+       return;
+    }
+
     setState(() {
       _isGenerating = true;
       _geminiTips = "";
@@ -53,6 +58,57 @@ class _TipsScreenState extends State<TipsScreen> {
         _geminiTips = "Failed to initialize Gemini: $e";
       });
     }
+  }
+
+  void _promptForApiKey(double currentPpm) {
+    final TextEditingController _keyController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Enter Gemini API Key', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'To generate personalized safety tips without Google instantly revoking your key on GitHub Pages, please paste your Gemini API Key here. It will be securely saved offline directly onto your device.',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: _keyController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'AIzaSy...',
+                hintStyle: TextStyle(color: Colors.white30),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_keyController.text.isNotEmpty) {
+                await GeminiService.instance.saveApiKey(_keyController.text.trim());
+                if (mounted) {
+                  Navigator.pop(context);
+                  _generateTips(currentPpm);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            child: const Text('Save & Generate', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

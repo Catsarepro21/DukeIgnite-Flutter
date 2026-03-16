@@ -1,4 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 class GeminiService {
@@ -8,31 +9,48 @@ class GeminiService {
   GenerativeModel? _model;
   bool _isInitialized = false;
 
-  void initialize() {
+  Future<void> initialize() async {
     if (_isInitialized) return;
     
-    const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    final prefs = await SharedPreferences.getInstance();
+    String apiKey = prefs.getString('gemini_api_key') ?? const String.fromEnvironment('GEMINI_API_KEY');
+    
     if (apiKey.isNotEmpty) {
-      _model = GenerativeModel(
-        model: 'gemini-2.5-flash',
-        apiKey: apiKey,
-      );
-      _isInitialized = true;
+      _setupModel(apiKey);
     }
   }
 
+  void _setupModel(String apiKey) {
+    _model = GenerativeModel(
+      model: 'gemini-2.5-flash-lite',
+      apiKey: apiKey,
+      generationConfig: GenerationConfig(
+        temperature: 0.2,
+        maxOutputTokens: 150,
+      )
+    );
+    _isInitialized = true;
+  }
+
+  Future<void> saveApiKey(String apiKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('gemini_api_key', apiKey);
+    _setupModel(apiKey);
+  }
+
+  bool get hasKey => _isInitialized && _model != null;
+
   Stream<String> getSafetyTipsStream(double ppm) async* {
-    if (!_isInitialized || _model == null) {
-       yield "Gemini API key not configured. Add GEMINI_API_KEY to your .env file.";
+    if (!hasKey) {
+       yield "API Key missing. Please provide your Gemini API key.";
        return;
     }
 
     final prompt = '''
-      You are an expert indoor air quality advisor embedded in a health and safety app tracking formaldehyde (HCHO) levels.
-      The current live sensor reading is $ppm PPM.
-      
-      Briefly explain the health impact of this level (safe is < 0.1 PPM) and provide 3 immediate, practical, and actionable tips for the user in a short, bulleted list. 
-      Keep the tone helpful and professional. Do not use markdown headers, just bullet points.
+      You are an expert indoor air quality advisor.
+      Live HCHO reading: $ppm PPM.
+      Briefly explain health impact (safe is < 0.1 PPM) and provide 3 immediate, actionable tips. 
+      Professional tone. Bullet points only, no headers.
     ''';
 
     try {

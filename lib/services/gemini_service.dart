@@ -14,7 +14,7 @@ class GeminiService {
     const apiKey = String.fromEnvironment('GEMINI_API_KEY');
     if (apiKey.isNotEmpty) {
       _model = GenerativeModel(
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash-latest',
         apiKey: apiKey,
       );
       _isInitialized = true;

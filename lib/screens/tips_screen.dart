@@ -84,7 +84,7 @@ class _TipsScreenState extends State<TipsScreen> {
                             Icon(Icons.auto_awesome, color: Colors.blueAccent),
                             SizedBox(width: 10),
                             Text(
-                              'AI Health Advisor',
+                              'Tips',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

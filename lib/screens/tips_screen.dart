@@ -120,18 +120,18 @@ class _TipsScreenState extends State<TipsScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.auto_awesome, color: Colors.blueAccent),
-                            SizedBox(width: 10),
-                            Text(
+                            const Icon(Icons.auto_awesome, color: Colors.blueAccent),
+                            const SizedBox(width: 10),
+                            const Text(
                               'Live AI Advice',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             if (_isGenerating)
-                              Text(
+                              const Text(
                                 'LIVE',
                                 style: TextStyle(
                                     color: Colors.redAccent,

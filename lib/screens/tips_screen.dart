@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -15,8 +14,6 @@ class TipsScreen extends StatefulWidget {
 class _TipsScreenState extends State<TipsScreen> {
   String _geminiTips = "";
   bool _isGenerating = false;
-  Timer? _refreshTimer;
-  double _lastPpm = -1;
 
   @override
   void initState() {
@@ -25,31 +22,12 @@ class _TipsScreenState extends State<TipsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final sensorData = Provider.of<SensorData>(context, listen: false);
       _generateTips(sensorData.ppm);
-      _startRefreshTimer();
     });
   }
 
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
-  void _startRefreshTimer() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
-      if (!mounted) return;
-      final sensorData = Provider.of<SensorData>(context, listen: false);
-      // Only refresh if PPM changed significantly (e.g. > 0.001)
-      if ((sensorData.ppm - _lastPpm).abs() > 0.001) {
-        _generateTips(sensorData.ppm);
-      }
-    });
-  }
 
   void _generateTips(double currentPpm) {
     if (_isGenerating || !mounted) return;
-    _lastPpm = currentPpm;
 
     setState(() {
       _isGenerating = true;

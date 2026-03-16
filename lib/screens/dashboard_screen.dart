@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'debug_console_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/thingspeak_service.dart';
-import 'package:intl/intl.dart';
+import '../services/thingspeak_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -115,6 +115,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: Colors.redAccent,
         ),
       );
+    }
+  }
+
+  Future<void> _fetchHistory() async {
+    final channelId = _channelIdController.text.trim();
+    if (channelId.isEmpty) return;
+
+    setState(() => _isFetchingHistory = true);
+
+    final history = await ThingSpeakService.instance.fetchHistory(
+      channelId: channelId,
+      apiKey: _apiKeyController.text.trim(),
+    );
+
+    if (mounted) {
+      setState(() {
+        _history = history;
+        _isFetchingHistory = false;
+      });
     }
   }
 

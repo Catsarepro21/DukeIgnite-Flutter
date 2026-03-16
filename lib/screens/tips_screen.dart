@@ -61,7 +61,7 @@ class _TipsScreenState extends State<TipsScreen> {
   }
 
   void _promptForApiKey(double currentPpm) {
-    final TextEditingController _keyController = TextEditingController();
+    final TextEditingController keyController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -78,7 +78,7 @@ class _TipsScreenState extends State<TipsScreen> {
             ),
             const SizedBox(height: 15),
             TextField(
-              controller: _keyController,
+              controller: keyController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'AIzaSy...',
@@ -95,10 +95,11 @@ class _TipsScreenState extends State<TipsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_keyController.text.isNotEmpty) {
-                await GeminiService.instance.saveApiKey(_keyController.text.trim());
+              if (keyController.text.isNotEmpty) {
+                final navigator = Navigator.of(context);
+                await GeminiService.instance.saveApiKey(keyController.text.trim());
                 if (mounted) {
-                  Navigator.pop(context);
+                  navigator.pop();
                   _generateTips(currentPpm);
                 }
               }

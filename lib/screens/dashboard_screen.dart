@@ -16,6 +16,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final TextEditingController _ssidController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
   SensorData? _sensorData;
   BleService? _bleService;
   String _version = '';
@@ -56,7 +58,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _sensorData?.removeListener(_onConnectionChange);
+    _ssidController.dispose();
+    _passController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendWifiCredentials() async {
+    final bleService = _bleService;
+    if (bleService == null) return;
+    FocusScope.of(context).unfocus();
+    final ssid = _ssidController.text.trim();
+    final pass = _passController.text.trim(); // empty = open network
+
+    if (ssid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the network SSID.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await bleService.setWifiCredentials(ssid, pass);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Credentials sent to sensor!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _ssidController.clear();
+      _passController.clear();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send credentials: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   void _onConnectionChange() {
@@ -167,9 +213,266 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 30),
 
-            // ---------- Other Controls (Volume, Threshold, LCD, WiFi) ----------
-            // Keep your existing Consumer sliders and WiFi setup here unchanged
-            // ...
+            // Volume Control Card
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Alarm Volume',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.volume_up, color: Colors.blueAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.blueAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.blueAccent,
+                          overlayColor: Colors.blueAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.volume.toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 10,
+                          label: sensorData.volume.toString(),
+                          onChanged: (val) {
+                            sensorData.updateVolume(val.toInt());
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setVolume(val.toInt());
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // PPM Threshold Control Card
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'PPM Alarm Threshold',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.warning_amber_rounded,
+                              color: Colors.orangeAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Alarm above ${sensorData.ppmThreshold} ppm',
+                        style: const TextStyle(
+                            color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.orangeAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.orangeAccent,
+                          overlayColor: Colors.orangeAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.ppmThreshold,
+                          min: 0.0,
+                          max: 5.0,
+                          divisions: 100, // 0.05 ppm increments
+                          label: '${sensorData.ppmThreshold.toStringAsFixed(2)} ppm',
+                          onChanged: (val) {
+                            sensorData.updatePpmThreshold(val);
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setPpmThreshold(val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // LCD Contrast Control Card
+            Consumer<SensorData>(
+              builder: (context, sensorData, child) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'LCD Contrast',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(Icons.brightness_medium,
+                              color: Colors.purpleAccent[100]),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.purpleAccent,
+                          inactiveTrackColor: Colors.grey[800],
+                          thumbColor: Colors.purpleAccent,
+                          overlayColor: Colors.purpleAccent.withAlpha(51),
+                        ),
+                        child: Slider(
+                          value: sensorData.lcdContrast.toDouble(),
+                          min: 0,
+                          max: 100,
+                          divisions: 10,
+                          label: '${sensorData.lcdContrast}%',
+                          onChanged: (val) {
+                            sensorData.updateLcdContrast(val.toInt());
+                          },
+                          onChangeEnd: (val) {
+                            _bleService?.setLcdContrast(val.toInt());
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 30),
+            
+            // Sensor Wi-Fi Setup Card (Static, no Consumer needed)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Sensor Wi-Fi Setup',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Icon(Icons.wifi, color: Colors.blueAccent[100]),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _ssidController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'SSID',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.blueAccent),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[850],
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _passController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Password (leave blank for open network)',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.blueAccent),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[850],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _sendWifiCredentials,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Update Credentials',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

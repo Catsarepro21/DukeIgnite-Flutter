@@ -7,6 +7,7 @@ import 'tips_screen.dart'; // NEW
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'debug_console_screen.dart';
+import '../services/gemini_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,6 +24,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _version = '';
   int _debugTapCount = 0;
   DateTime? _lastTapTime;
+  String _flashAdvice = "Open a door or window for your safety";
+  bool _isGeneratingFlash = false;
+  double? _lastAlertPpm;
 
   @override
   void didChangeDependencies() {
@@ -30,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_sensorData == null) {
       _sensorData = Provider.of<SensorData>(context, listen: false);
       _bleService = Provider.of<BleService>(context, listen: false);
-      _sensorData!.addListener(_onConnectionChange);
+      _sensorData!.addListener(_onDataOrConnectionChange);
     }
   }
 
@@ -57,7 +61,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
-    _sensorData?.removeListener(_onConnectionChange);
+    _sensorData?.removeListener(_onDataOrConnectionChange);
     _ssidController.dispose();
     _passController.dispose();
     super.dispose();
@@ -105,14 +109,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _onConnectionChange() {
+  void _onDataOrConnectionChange() {
     if (!mounted || _sensorData == null) return;
+
+    // Handle disconnect
     if (!_sensorData!.isConnected) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => const ScanScreen(),
         ),
       );
+      return;
+    }
+
+    // Handle AI Flash Advice for alerts
+    if (_sensorData!.ventilationWarning) {
+      // Only generate if PPM shifted significantly (±0.1) or first time alerting
+      if (!_isGeneratingFlash &&
+          (_lastAlertPpm == null || (_sensorData!.ppm - _lastAlertPpm!).abs() > 0.1)) {
+        _generateFlashAdvice(_sensorData!.ppm);
+      }
+    } else {
+      _lastAlertPpm = null; // Reset when safe
+    }
+  }
+
+  Future<void> _generateFlashAdvice(double ppm) async {
+    setState(() {
+      _isGeneratingFlash = true;
+    });
+
+    final advice = await GeminiService.instance.getFlashAdvice(ppm);
+
+    if (mounted) {
+      setState(() {
+        _flashAdvice = advice;
+        _isGeneratingFlash = false;
+        _lastAlertPpm = ppm;
+      });
     }
   }
 
@@ -149,72 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ---------- Tips Button Card ----------
-            InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TipsScreen()),
-                );
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF1E88E5),
-                      Color(0xFF1565C0)
-                    ], // Blue gradient
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueAccent.withAlpha(50),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tips',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Get personalized safety advice',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Icon(
-                      Icons.auto_awesome,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // ---------- PPM Gauge Card ----------
+            // ---------- PPM Gauge Card (PRIORITIZED AT TOP) ----------
             Consumer<SensorData>(
               builder: (context, sensorData, child) {
                 final alertColor = sensorData.alertColor;
@@ -251,13 +220,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         style: TextStyle(color: Colors.white70, fontSize: 18),
                       ),
                       if (sensorData.ventilationWarning)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 10),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 15),
                           child: Text(
-                            'Open a door or window for your safety',
-                            style: TextStyle(
+                            _isGeneratingFlash ? 'Analyzing safety...' : _flashAdvice,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
                               color: Colors.redAccent,
                               fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
                           ),
                         ),
@@ -265,6 +236,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 25),
+
+            // ---------- Tips Button Card (MOVE BELOW GAUGE) ----------
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TipsScreen()),
+                );
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueAccent.withAlpha(50),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Expert Advice',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'View personalized safety deep-dive',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 30),
 

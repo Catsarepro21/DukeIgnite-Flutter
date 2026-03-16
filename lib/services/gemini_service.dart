@@ -65,4 +65,22 @@ class GeminiService {
       yield "Error connecting to AI Provider: $e";
     }
   }
+
+  /// Returns a single, punchy safety sentence for the dashboard alert.
+  /// Optimized for speed.
+  Future<String> getFlashAdvice(double ppm) async {
+    if (!_isInitialized || _model == null) return "Open a window for safety.";
+
+    final prompt =
+        'Reading: $ppm PPM. Give 1 short, urgent safety sentence (max 10 words). '
+        'Example: "High levels—evacuation recommended!" '
+        'Just the sentence, no quotes.';
+
+    try {
+      final response = await _model!.generateContent([Content.text(prompt)]);
+      return response.text?.trim() ?? "Open a window for safety.";
+    } catch (e) {
+      return "Open a window for safety.";
+    }
+  }
 }

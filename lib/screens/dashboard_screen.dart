@@ -7,7 +7,6 @@ import 'tips_screen.dart'; // NEW
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'debug_console_screen.dart';
-import '../services/gemini_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,7 +23,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _version = '';
   int _debugTapCount = 0;
   DateTime? _lastTapTime;
-  double? _lastAlertPpm;
 
   @override
   void didChangeDependencies() {

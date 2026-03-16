@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 /// there is no simulation timer; data only comes from the hardware.
 class SensorData extends ChangeNotifier {
   bool _isConnected = false;
+  bool _isBypassMode = false;
   double _ppm = 0.0;
   int _volume = 50;
   double _ppmThreshold = 0.5; // ppm alarm threshold (0.0–5.0)
   int _lcdContrast = 50; // LCD contrast (0–100)
 
-  bool get isConnected => _isConnected;
+  bool get isConnected => _isConnected || _isBypassMode;
+  bool get isBypassMode => _isBypassMode;
   double get ppm => _ppm;
   int get volume => _volume;
   double get ppmThreshold => _ppmThreshold;
@@ -30,6 +32,13 @@ class SensorData extends ChangeNotifier {
     if (_isConnected == status) return;
     _isConnected = status;
     debugPrint('[SensorData] Connection status → $status');
+    notifyListeners();
+  }
+
+  void setBypassMode(bool enabled) {
+    if (_isBypassMode == enabled) return;
+    _isBypassMode = enabled;
+    debugPrint('[SensorData] Bypass mode → $enabled');
     notifyListeners();
   }
 

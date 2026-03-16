@@ -136,6 +136,7 @@ class _ScanScreenState extends State<ScanScreen> {
     });
 
     LogService.instance.log('[ScanScreen] Starting BLE scan (web=$kIsWeb).');
+    _sensorData?.setBypassMode(false);
     bleService.startScan();
   }
 

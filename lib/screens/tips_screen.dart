@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import '../models/sensor_data.dart';
 import '../services/gemini_service.dart';
@@ -40,8 +41,12 @@ class _TipsScreenState extends State<TipsScreen> {
         },
         onError: (e) {
           if (mounted) {
+            String errorMsg = e.toString();
+            if (errorMsg.contains("429") || errorMsg.contains("quota")) {
+              errorMsg = "AI Quota exceeded. Please wait a minute before trying again.";
+            }
             setState(() {
-              _geminiTips = "Error generating tips: $e";
+              _geminiTips = "Error: $errorMsg";
               _isGenerating = false;
             });
           }
@@ -94,13 +99,24 @@ class _TipsScreenState extends State<TipsScreen> {
                           ],
                         ),
                         const SizedBox(height: 15),
-                        Text(
-                          _geminiTips.isEmpty
-                              ? 'Tap below for advice based on your live reading (${sensorData.ppm.toStringAsFixed(3)} PPM).'
-                              : _geminiTips,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 16),
-                        ),
+                        if (_geminiTips.isEmpty)
+                          Text(
+                            'Tap below for advice based on your live reading (${sensorData.ppm.toStringAsFixed(3)} PPM).',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 16),
+                          )
+                        else
+                          MarkdownBody(
+                            data: _geminiTips,
+                            styleSheet: MarkdownStyleSheet(
+                              p: const TextStyle(
+                                  color: Colors.white70, fontSize: 16),
+                              strong: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                              listBullet: const TextStyle(color: Colors.white70),
+                            ),
+                          ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
                           onPressed: _isGenerating

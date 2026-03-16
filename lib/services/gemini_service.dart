@@ -55,20 +55,30 @@ class GeminiService {
     }
 
     final prompt = '''
-      You are a specialized Medical Toxicologist and Environmental Health Expert. 
+      You are a specialized Medical Toxicologist and Environmental Safety Expert.
       CURRENT FORMALDEHYDE (HCHO) READING: $ppm PPM.
       
       TASK:
-      Provide a concise 2-part safety brief.
+      Analyze this specific concentration using WHO, OSHA, and EPA exposure limits.
+      
+      INTELLECTUAL EVALUATION:
+      - At $ppm PPM, what are the immediate physiological risks?
+      - Is this concentration considered "Safe", "Unhealthy", "Hazardous", or "Immediately Dangerous to Life and Health (IDLH)"?
+      
+      URGENCY RULES:
+      - Under 0.08 PPM: Focus on long-term air quality maintenance.
+      - 0.08 - 0.50 PPM: Immediate ventilation and source identification.
+      - 0.50 - 2.00 PPM: High risk. Evacuate children/sensitive individuals. Full ventilation.
+      - Above 2.00 PPM: EXTREME DANGER. Recommend immediate evacuation and hazmat/professional evaluation. Be blunt and authoritative.
       
       FORMAT:
-      1. **[RISK LEVEL]**: One bold risk assessment based on WHO/OSHA standards.
-      2. **[ACTIONS]**: A numbered list of 3 specific, prioritized safety actions.
+      1. One bold risk level assessment.
+      2. 3 highly specific, prioritized safety actions based on $ppm PPM.
       
-      GUIDELINES:
-      - Be direct and authoritative.
-      - Total length must be under 100 words.
-      - Do not include introductory text or general definitions.
+      STRICT LIMITS:
+      - Max 100 words.
+      - No general history, no definitions. 
+      - If $ppm is 0.000, praise the perfect air.
     ''';
 
     try {
@@ -88,8 +98,22 @@ class GeminiService {
   }
 
   /// Returns a single, punchy safety sentence for the dashboard alert.
-  /// Note: This is currently unused in favor of local safety ranges.
+  /// Optimized for extreme reactivity and awareness.
   Future<String> getFlashAdvice(double ppm) async {
-    return "Please view personalized tips for detailed advice.";
+    if (!_isInitialized || _model == null) return "High levels detected. Please ventilate.";
+
+    final prompt =
+        'Reading: $ppm PPM of HCHO. '
+        'Judge the danger level (WHO/OSHA). '
+        'Provide ONE single, ultra-short safety command (max 8 words). '
+        'If levels are > 2.0 PPM, command immediate evacuation in all caps. '
+        'No quotes, just the command.';
+
+    try {
+      final response = await _model!.generateContent([Content.text(prompt)]);
+      return response.text?.trim() ?? "High levels detected. Please ventilate.";
+    } catch (e) {
+      return "High levels detected. Please ventilate.";
+    }
   }
 }

@@ -122,12 +122,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getSafetyMessage(double ppm) {
+    const learnMore = "\nOpen personalized tips below to learn more";
     if (ppm < 0.05) return "Air quality is currently optimal.";
-    if (ppm < 0.10) return "Fair—consider light ventilation.";
-    if (ppm < 0.50) return "Unhealthy—open a window for safety.";
-    if (ppm < 1.00) return "DANGEROUS—High concentration detected!";
-    if (ppm < 3.00) return "TOXIC HAZARD—EVACUATE AREA IMMEDIATELY!";
-    return "LETHAL RISK—EMERGENCY EVACUATION REQUIRED!";
+    if (ppm < 0.10) return "Fair—consider light ventilation.$learnMore";
+    if (ppm < 0.50) return "Unhealthy—open a window for safety.$learnMore";
+    if (ppm < 1.00) return "DANGEROUS—High concentration detected!$learnMore";
+    if (ppm < 3.00) return "TOXIC HAZARD—EVACUATE AREA IMMEDIATELY!$learnMore";
+    return "LETHAL RISK—EMERGENCY EVACUATION REQUIRED!$learnMore";
   }
 
 

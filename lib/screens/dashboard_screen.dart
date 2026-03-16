@@ -24,8 +24,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _version = '';
   int _debugTapCount = 0;
   DateTime? _lastTapTime;
-  String _flashAdvice = "Open a door or window for your safety";
-  bool _isGeneratingFlash = false;
   double? _lastAlertPpm;
 
   @override
@@ -123,53 +121,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       return;
     }
-
-    // Handle AI Flash Advice for alerts
-    if (_sensorData!.ventilationWarning) {
-      // Logic for when to update flash advice:
-      // 1. If we aren't already generating one.
-      // 2. AND (If this is the FIRST alert [_lastAlertPpm == null], OR if the PPM shifted by > 0.1)
-      if (!_isGeneratingFlash &&
-          (_lastAlertPpm == null || (_sensorData!.ppm - _lastAlertPpm!).abs() > 0.1)) {
-        _generateFlashAdvice(_sensorData!.ppm);
-      }
-    } else {
-      // Reset state when air is safe again
-      if (_lastAlertPpm != null) {
-        setState(() {
-          _lastAlertPpm = null;
-          _flashAdvice = "Open a door or window for your safety"; // Reset to default
-        });
-      }
-    }
   }
 
-  Future<void> _generateFlashAdvice(double ppm) async {
-    if (!mounted) return;
-    
-    setState(() {
-      _isGeneratingFlash = true;
-    });
-
-    try {
-      final advice = await GeminiService.instance.getFlashAdvice(ppm);
-      if (mounted) {
-        setState(() {
-          _flashAdvice = advice;
-          _isGeneratingFlash = false;
-          _lastAlertPpm = ppm;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _flashAdvice = "Harmful levels—ventilate immediately";
-          _isGeneratingFlash = false;
-          _lastAlertPpm = ppm;
-        });
-      }
-    }
+  String _getSafetyMessage(double ppm) {
+    if (ppm < 0.05) return "Air quality is currently optimal.";
+    if (ppm < 0.10) return "Fair—consider light ventilation.";
+    if (ppm < 0.50) return "Unhealthy—open a window for safety.";
+    if (ppm < 1.00) return "DANGEROUS—High concentration detected!";
+    if (ppm < 3.00) return "TOXIC HAZARD—EVACUATE AREA IMMEDIATELY!";
+    return "LETHAL RISK—EMERGENCY EVACUATION REQUIRED!";
   }
+
 
   String _formatPpm(double ppm) {
     if (ppm < 0.01) return ppm.toStringAsFixed(4);
@@ -244,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 15),
                           child: Text(
-                            _isGeneratingFlash ? 'Analyzing safety...' : _flashAdvice,
+                            _getSafetyMessage(sensorData.ppm),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.redAccent,

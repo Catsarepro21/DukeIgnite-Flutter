@@ -27,8 +27,8 @@ class GeminiService {
             model: 'gemini-2.5-flash',
             apiKey: decodedKey,
             generationConfig: GenerationConfig(
-              temperature: 0.3, // Slightly higher for better flow
-              maxOutputTokens: 512, // Increased to prevent truncation
+              temperature: 0.4, // Adjusted for better flow
+              maxOutputTokens: 1024, // High limit to ensure no truncation
             ));
         _isInitialized = true;
       } catch (e) {
@@ -55,30 +55,12 @@ class GeminiService {
     }
 
     final prompt = '''
-      You are a specialized Medical Toxicologist and Environmental Safety Expert.
-      CURRENT FORMALDEHYDE (HCHO) READING: $ppm PPM.
+      Analyze the formaldehyde (HCHO) level: $ppm PPM.
       
-      TASK:
-      Analyze this specific concentration using WHO, OSHA, and EPA exposure limits.
+      1. **Risk Level**: Provide a clear, bolded risk assessment (WHO/OSHA standards).
+      2. **Safety Actions**: List 3 prioritized actions to take now.
       
-      INTELLECTUAL EVALUATION:
-      - At $ppm PPM, what are the immediate physiological risks?
-      - Is this concentration considered "Safe", "Unhealthy", "Hazardous", or "Immediately Dangerous to Life and Health (IDLH)"?
-      
-      URGENCY RULES:
-      - Under 0.08 PPM: Focus on long-term air quality maintenance.
-      - 0.08 - 0.50 PPM: Immediate ventilation and source identification.
-      - 0.50 - 2.00 PPM: High risk. Evacuate children/sensitive individuals. Full ventilation.
-      - Above 2.00 PPM: EXTREME DANGER. Recommend immediate evacuation and hazmat/professional evaluation. Be blunt and authoritative.
-      
-      FORMAT:
-      1. One bold risk level assessment.
-      2. 3 highly specific, prioritized safety actions based on $ppm PPM.
-      
-      STRICT LIMITS:
-      - Max 100 words.
-      - No general history, no definitions. 
-      - If $ppm is 0.000, praise the perfect air.
+      Keep the response direct, authoritative, and under 100 words. Use markdown.
     ''';
 
     try {

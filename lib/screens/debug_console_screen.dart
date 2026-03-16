@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import '../services/log_service.dart';
 import 'dashboard_screen.dart';
 
+import 'package:provider/provider.dart';
+import '../models/sensor_data.dart';
+
 class DebugConsoleScreen extends StatefulWidget {
   const DebugConsoleScreen({super.key});
 
@@ -12,6 +15,7 @@ class DebugConsoleScreen extends StatefulWidget {
 
 class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _commandController = TextEditingController();
 
   @override
   void initState() {
@@ -25,6 +29,7 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
   void dispose() {
     LogService.instance.removeListener(_update);
     _scrollController.dispose();
+    _commandController.dispose();
     super.dispose();
   }
 
@@ -43,6 +48,51 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
         curve: Curves.easeOut,
       );
     }
+  }
+
+  void _handleCommand(String input) {
+    if (input.trim().isEmpty) return;
+    
+    final parts = input.trim().toLowerCase().split(' ');
+    final command = parts[0];
+    final sensorData = Provider.of<SensorData>(context, listen: false);
+
+    LogService.instance.log('> $input');
+
+    try {
+      switch (command) {
+        case 'ppm':
+          if (parts.length > 1) {
+            final val = double.parse(parts[1]);
+            sensorData.updatePpm(val);
+            LogService.instance.log('[Debug] Set PPM to $val');
+          }
+          break;
+        case 'threshold':
+          if (parts.length > 1) {
+            final val = double.parse(parts[1]);
+            sensorData.updatePpmThreshold(val);
+            LogService.instance.log('[Debug] Set Threshold to $val');
+          }
+          break;
+        case 'volume':
+          if (parts.length > 1) {
+            final val = int.parse(parts[1]);
+            sensorData.updateVolume(val);
+            LogService.instance.log('[Debug] Set Volume to $val');
+          }
+          break;
+        case 'clear':
+          LogService.instance.clear();
+          break;
+        default:
+          LogService.instance.log('[Error] Unknown command: $command');
+      }
+    } catch (e) {
+      LogService.instance.log('[Error] Invalid value: $e');
+    }
+
+    _commandController.clear();
   }
 
   void _copyToClipboard() {
@@ -75,7 +125,6 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             icon: const Icon(Icons.rocket_launch),
             onPressed: () {
               LogService.instance.log('[Debug] Bypassing connection for testing.');
-              // Push replacement so going back doesn't take them back to debug console instantly
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const DashboardScreen()),
               );
@@ -84,25 +133,58 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
           ),
         ],
       ),
-      body: Container(
-        color: Colors.black,
-        width: double.infinity,
-        height: double.infinity,
-        child: ListView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(8),
-          itemCount: logs.length,
-          itemBuilder: (context, index) {
-            return Text(
-              logs[index],
-              style: const TextStyle(
-                color: Colors.greenAccent,
-                fontFamily: 'Courier',
-                fontSize: 12,
+      body: Column(
+        children: [
+          Expanded(
+            child: Container(
+              color: Colors.black,
+              width: double.infinity,
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(8),
+                itemCount: logs.length,
+                itemBuilder: (context, index) {
+                  return Text(
+                    logs[index],
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontFamily: 'Courier',
+                      fontSize: 12,
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          Container(
+            color: Colors.grey[900],
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Text('>', style: TextStyle(color: Colors.greenAccent, fontFamily: 'Courier')),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _commandController,
+                    style: const TextStyle(color: Colors.white, fontFamily: 'Courier', fontSize: 14),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter command (ppm 0.1)...',
+                      hintStyle: TextStyle(color: Colors.white24),
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: _handleCommand,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blueAccent),
+                  onPressed: () => _handleCommand(_commandController.text),
+                ),
+              ],
+            ),
+          ),
+          // Bottom safe area padding
+          Container(height: MediaQuery.of(context).padding.bottom, color: Colors.grey[900]),
+        ],
       ),
     );
   }

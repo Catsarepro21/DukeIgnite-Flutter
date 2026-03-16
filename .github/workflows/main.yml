@@ -230,10 +230,12 @@ jobs:
           path: DukeIgnite_Linux.zip
 
   create-release:
-    name:  Create Unified Release
-    needs: [build-ios, build-windows, build-android, build-linux, check-version]
+    name: Create GitHub Release
+    needs: [build-web, build-windows, build-android, build-linux, check-version]
     if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code to Read Version
         uses: actions/checkout@v4
@@ -271,7 +273,7 @@ jobs:
       - name: Determine Tag
         id: tag
         run: |
-          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}' | tr '+' '-')
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | awk '{print $2}')
           echo "VERSION=v$APP_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release

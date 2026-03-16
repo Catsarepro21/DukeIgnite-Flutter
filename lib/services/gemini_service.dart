@@ -27,8 +27,8 @@ class GeminiService {
             model: 'gemini-2.5-flash',
             apiKey: decodedKey,
             generationConfig: GenerationConfig(
-              temperature: 0.1,
-              maxOutputTokens: 200,
+              temperature: 0.3, // Slightly higher for better flow
+              maxOutputTokens: 512, // Increased to prevent truncation
             ));
         _isInitialized = true;
       } catch (e) {
@@ -55,11 +55,20 @@ class GeminiService {
     }
 
     final prompt = '''
-      You are a specialized Medical Toxicologist. 
-      Analyze $ppm PPM Formaldehyde (HCHO).
-      1. Bold risk level.
-      2. 3 short actions.
-      Max 80 words.
+      You are a specialized Medical Toxicologist and Environmental Health Expert. 
+      CURRENT FORMALDEHYDE (HCHO) READING: $ppm PPM.
+      
+      TASK:
+      Provide a concise 2-part safety brief.
+      
+      FORMAT:
+      1. **[RISK LEVEL]**: One bold risk assessment based on WHO/OSHA standards.
+      2. **[ACTIONS]**: A numbered list of 3 specific, prioritized safety actions.
+      
+      GUIDELINES:
+      - Be direct and authoritative.
+      - Total length must be under 100 words.
+      - Do not include introductory text or general definitions.
     ''';
 
     try {

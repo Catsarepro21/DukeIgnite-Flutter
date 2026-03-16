@@ -35,6 +35,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _sensorData = Provider.of<SensorData>(context, listen: false);
       _bleService = Provider.of<BleService>(context, listen: false);
       _sensorData!.addListener(_onDataOrConnectionChange);
+      // Immediate evaluation for when the screen is first loaded/returned to
+      _onDataOrConnectionChange();
     }
   }
 

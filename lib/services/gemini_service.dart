@@ -49,9 +49,8 @@ class GeminiService {
     final prompt = '''
       You are an expert indoor air quality advisor.
       Live HCHO reading: $ppm PPM.
-      Provide 3 immediate, actionable tips based ONLY on this reading. 
-      DO NOT provide any general information, explanations, health impact summaries, or headers. 
-      JUST 3 bullet points. Professional tone.
+      Briefly explain health impact (safe is < 0.1 PPM) and provide 3 immediate, actionable tips. 
+      Professional tone. Bullet points only, no headers.
     ''';
 
     try {

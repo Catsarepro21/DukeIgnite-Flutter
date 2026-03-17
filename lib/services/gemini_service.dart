@@ -1,4 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'log_service.dart';
@@ -76,6 +77,30 @@ class GeminiService {
         _lastErrorTime = DateTime.now();
       }
       yield "AI Service error: $e";
+    }
+  }
+
+  /// Fetches the list of available models from the Gemini API.
+  Future<List<String>> listModels() async {
+    const reversedKey = String.fromEnvironment('GEMINI_API_KEY_B64');
+    if (reversedKey.isEmpty) return ["API Key not found."];
+
+    try {
+      final encodedKey = reversedKey.split('').reversed.join('');
+      final apiKey = utf8.decode(base64Decode(encodedKey));
+      
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List models = data['models'] ?? [];
+        return models.map((m) => m['name']?.toString() ?? 'unknown').toList();
+      } else {
+        return ["Error: HTTP ${response.statusCode}", response.body];
+      }
+    } catch (e) {
+      return ["Exception: $e"];
     }
   }
 

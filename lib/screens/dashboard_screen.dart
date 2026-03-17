@@ -694,8 +694,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 200,
                       child: LineChart(
                         LineChartData(
-                          gridData: const FlGridData(show: false),
-                          titlesData: const FlTitlesData(show: false),
+                          lineTouchData: LineTouchData(
+                            touchTooltipData: LineTouchTooltipData(
+                              getTooltipColor: (spot) => Colors.blueGrey.withAlpha(200),
+                              getTooltipItems: (touchedSpots) {
+                                return touchedSpots.map((touchedSpot) {
+                                  final reading = _history[touchedSpot.spotIndex];
+                                  final time = "${reading.createdAt.hour.toString().padLeft(2, '0')}:${reading.createdAt.minute.toString().padLeft(2, '0')}";
+                                  return LineTooltipItem(
+                                    '$time\n${touchedSpot.y.toStringAsFixed(3)} PPM',
+                                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  );
+                                }).toList();
+                              },
+                            ),
+                          ),
+                          gridData: const FlGridData(show: true, drawVerticalLine: false),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) => Text(
+                                  value.toStringAsFixed(1),
+                                  style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                ),
+                                reservedSize: 28,
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                interval: (_history.length / 4).clamp(1, 100).toDouble(),
+                                getTitlesWidget: (value, meta) {
+                                  if (value.toInt() >= 0 && value.toInt() < _history.length) {
+                                    final date = _history[value.toInt()].createdAt;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                        "${date.hour}:${date.minute.toString().padLeft(2, '0')}",
+                                        style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox();
+                                },
+                                reservedSize: 30,
+                              ),
+                            ),
+                          ),
                           borderData: FlBorderData(show: false),
                           lineBarsData: [
                             LineChartBarData(

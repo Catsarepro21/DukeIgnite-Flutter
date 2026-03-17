@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/log_service.dart';
 import '../services/thingspeak_service.dart';
+import '../services/gemini_service.dart';
 import 'dashboard_screen.dart';
 
 import 'package:provider/provider.dart';
@@ -71,6 +72,7 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
               '  - status <on|off>: Toggle connection UI\n'
               '  - log <msg>: Print custom message\n'
               '  - ts <ppm>: Push PPM to ThingSpeak\n'
+              '  - listmodels: Show available AI models\n'
               '  - clear: Wipe console history');
           break;
         case 'ppm':
@@ -106,6 +108,13 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             final val = parts[1] == 'on';
             sensorData.setConnectionStatus(val);
             LogService.instance.log('[Debug] Connection status set to $val');
+          }
+          break;
+        case 'listmodels':
+          LogService.instance.log('[System] Fetching available models...');
+          final models = await GeminiService.instance.listModels();
+          for (final model in models) {
+            LogService.instance.log('  - $model');
           }
           break;
         case 'ts':

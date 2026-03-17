@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() => _isFetchingHistory = true);
       final success = await ThingSpeakService.instance.clearChannelFeeds(
         channelId: '3238778',
-        userApiKey: 'GUA6KB0HVB22T7M0', // User provided this key for reset
+        userApiKey: 'ECC7JVTKOV2SOHFK', // User provided User API Key for reset
       );
 
       if (success) {

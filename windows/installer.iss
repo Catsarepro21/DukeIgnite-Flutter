@@ -1,7 +1,7 @@
 [Setup]
 AppId={{D37793BB-4F15-4D56-8A3E-963BB2328DB4}
 AppName=Duke Ignite Formaldehyde Monitor
-AppVersion=1.0.92
+AppVersion=1.0.93
 AppPublisher=Duke Ignite
 DefaultDirName={autopf}\DukeIgniteFormaldehydeMonitor
 DisableProgramGroupPage=yes

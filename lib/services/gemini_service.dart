@@ -25,7 +25,7 @@ class GeminiService {
         final decodedKey = utf8.decode(base64Decode(encodedKey));
         // Use Gemini 3.1 Flash-Lite - March 2026 release.
         _model = GenerativeModel(
-            model: 'gemini-3.1-flash-lite',
+            model: 'models/gemini-3.1-flash-lite-preview',
             apiKey: decodedKey,
             generationConfig: GenerationConfig(
               temperature: 0.4, // Adjusted for better flow

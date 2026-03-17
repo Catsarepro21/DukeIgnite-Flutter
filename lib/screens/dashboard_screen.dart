@@ -700,9 +700,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               getTooltipItems: (touchedSpots) {
                                 return touchedSpots.map((touchedSpot) {
                                   final reading = _history[touchedSpot.spotIndex];
-                                  final time = "${reading.createdAt.hour.toString().padLeft(2, '0')}:${reading.createdAt.minute.toString().padLeft(2, '0')}";
+                                  final date = reading.createdAt;
+                                  final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+                                  final amPm = date.hour >= 12 ? 'PM' : 'AM';
+                                  final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
+                                  final dateStr = "${date.month}/${date.day}/${date.year.toString().substring(2)}";
                                   return LineTooltipItem(
-                                    '$time\n${touchedSpot.y.toStringAsFixed(3)} PPM',
+                                    '$dateStr, $timeStr\n${touchedSpot.y.toStringAsFixed(3)} PPM',
                                     const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                   );
                                 }).toList();
@@ -731,17 +735,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 getTitlesWidget: (value, meta) {
                                   if (value.toInt() >= 0 && value.toInt() < _history.length) {
                                     final date = _history[value.toInt()].createdAt;
+                                    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+                                    final amPm = date.hour >= 12 ? 'PM' : 'AM';
+                                    
+                                    // Show date if it's the first label or if the date changed
+                                    bool showDate = value.toInt() == 0;
+                                    if (!showDate && value.toInt() > 0) {
+                                      final prevDate = _history[value.toInt() - 1].createdAt;
+                                      if (prevDate.day != date.day || prevDate.month != date.month) {
+                                        showDate = true;
+                                      }
+                                    }
+
+                                    final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
+                                    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                    final dateStr = showDate ? "${monthNames[date.month - 1]} ${date.day}\n" : "";
+
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
                                       child: Text(
-                                        "${date.hour}:${date.minute.toString().padLeft(2, '0')}",
-                                        style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                        "$dateStr$timeStr",
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Colors.grey, fontSize: 9),
                                       ),
                                     );
                                   }
                                   return const SizedBox();
                                 },
-                                reservedSize: 30,
+                                reservedSize: 40,
                               ),
                             ),
                           ),

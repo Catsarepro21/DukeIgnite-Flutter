@@ -6,7 +6,8 @@ class NotificationService {
   NotificationService._internal();
   static final NotificationService instance = NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
 
@@ -23,7 +24,8 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
@@ -45,10 +47,12 @@ class NotificationService {
   Future<void> showHighPpmAlert(double ppm) async {
     if (!_isInitialized) await initialize();
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'ppm_alerts',
       'PPM Safety Alerts',
-      channelDescription: 'Alerts when formaldehyde levels exceed safety thresholds.',
+      channelDescription:
+          'Alerts when formaldehyde levels exceed safety thresholds.',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'Formaldehyde Alert',
@@ -74,7 +78,8 @@ class NotificationService {
       await _localNotifications.show(
         id: 0,
         title: '⚠️ HIGH FORMALDEHYDE ALERT',
-        body: 'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
+        body:
+            'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
         notificationDetails: platformDetails,
         payload: 'high_ppm_alert',
       );

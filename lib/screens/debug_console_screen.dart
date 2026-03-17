@@ -181,7 +181,8 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             onPressed: () {
               LogService.instance
                   .log('[Debug] Bypassing connection for testing.');
-              final sensorData = Provider.of<SensorData>(context, listen: false);
+              final sensorData =
+                  Provider.of<SensorData>(context, listen: false);
               sensorData.setBypassMode(true);
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(

@@ -25,7 +25,6 @@ class _TipsScreenState extends State<TipsScreen> {
     });
   }
 
-
   void _generateTips(double currentPpm) {
     if (_isGenerating || !mounted) return;
 
@@ -54,7 +53,8 @@ class _TipsScreenState extends State<TipsScreen> {
           if (mounted) {
             String errorMsg = e.toString();
             if (errorMsg.contains("429") || errorMsg.contains("quota")) {
-              errorMsg = "AI Quota exceeded. Please wait a minute before trying again.";
+              errorMsg =
+                  "AI Quota exceeded. Please wait a minute before trying again.";
             }
             setState(() {
               _geminiTips = "Error: $errorMsg";
@@ -98,7 +98,8 @@ class _TipsScreenState extends State<TipsScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.auto_awesome, color: Colors.blueAccent),
+                            const Icon(Icons.auto_awesome,
+                                color: Colors.blueAccent),
                             const SizedBox(width: 10),
                             const Text(
                               'Live AI Advice',
@@ -134,7 +135,8 @@ class _TipsScreenState extends State<TipsScreen> {
                               strong: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold),
-                              listBullet: const TextStyle(color: Colors.white70),
+                              listBullet:
+                                  const TextStyle(color: Colors.white70),
                             ),
                           ),
                         const SizedBox(height: 20),

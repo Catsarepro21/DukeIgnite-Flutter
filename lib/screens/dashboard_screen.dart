@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/sensor_data.dart';
 import '../services/ble_service.dart';
 import 'scan_screen.dart';
-import 'tips_screen.dart'; // NEW
+import 'tips_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'debug_console_screen.dart';
@@ -170,8 +170,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content:
-                    Text('Failed to clear history. Check API Key permissions.')),
+                content: Text(
+                    'Failed to clear history. Check API Key permissions.')),
           );
         }
       }
@@ -204,7 +204,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (ppm < 3.00) return "TOXIC HAZARD—EVACUATE AREA IMMEDIATELY!$learnMore";
     return "LETHAL RISK—EMERGENCY EVACUATION REQUIRED!$learnMore";
   }
-
 
   String _formatPpm(double ppm) {
     if (ppm < 0.01) return ppm.toStringAsFixed(4);
@@ -665,7 +664,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Icon(Icons.refresh, color: Colors.white),
+                                : const Icon(Icons.refresh,
+                                    color: Colors.white),
                             onPressed: _fetchHistory,
                           ),
                         ],
@@ -696,34 +696,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         LineChartData(
                           lineTouchData: LineTouchData(
                             touchTooltipData: LineTouchTooltipData(
-                              getTooltipColor: (spot) => Colors.blueGrey.withAlpha(200),
+                              getTooltipColor: (spot) =>
+                                  Colors.blueGrey.withAlpha(200),
                               getTooltipItems: (touchedSpots) {
                                 return touchedSpots.map((touchedSpot) {
-                                  final reading = _history[touchedSpot.spotIndex];
+                                  final reading =
+                                      _history[touchedSpot.spotIndex];
                                   final date = reading.createdAt;
-                                  final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+                                  final hour = date.hour > 12
+                                      ? date.hour - 12
+                                      : (date.hour == 0 ? 12 : date.hour);
                                   final amPm = date.hour >= 12 ? 'PM' : 'AM';
-                                  final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
-                                  final dateStr = "${date.month}/${date.day}/${date.year.toString().substring(2)}";
+                                  final timeStr =
+                                      "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
+                                  final dateStr =
+                                      "${date.month}/${date.day}/${date.year.toString().substring(2)}";
                                   return LineTooltipItem(
                                     '$dateStr, $timeStr\n${touchedSpot.y.toStringAsFixed(3)} PPM',
-                                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   );
                                 }).toList();
                               },
                             ),
                           ),
-                          gridData: const FlGridData(show: true, drawVerticalLine: false),
+                          gridData: const FlGridData(
+                              show: true, drawVerticalLine: false),
                           titlesData: FlTitlesData(
                             show: true,
-                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                            topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 getTitlesWidget: (value, meta) => Text(
                                   value.toStringAsFixed(1),
-                                  style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 10),
                                 ),
                                 reservedSize: 28,
                               ),
@@ -731,32 +743,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                interval: (_history.length / 4).clamp(1, 100).toDouble(),
+                                interval: (_history.length / 4)
+                                    .clamp(1, 100)
+                                    .toDouble(),
                                 getTitlesWidget: (value, meta) {
-                                  if (value.toInt() >= 0 && value.toInt() < _history.length) {
-                                    final date = _history[value.toInt()].createdAt;
-                                    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+                                  if (value.toInt() >= 0 &&
+                                      value.toInt() < _history.length) {
+                                    final date =
+                                        _history[value.toInt()].createdAt;
+                                    final hour = date.hour > 12
+                                        ? date.hour - 12
+                                        : (date.hour == 0 ? 12 : date.hour);
                                     final amPm = date.hour >= 12 ? 'PM' : 'AM';
-                                    
+
                                     // Show date if it's the first label or if the date changed
                                     bool showDate = value.toInt() == 0;
                                     if (!showDate && value.toInt() > 0) {
-                                      final prevDate = _history[value.toInt() - 1].createdAt;
-                                      if (prevDate.day != date.day || prevDate.month != date.month) {
+                                      final prevDate =
+                                          _history[value.toInt() - 1].createdAt;
+                                      if (prevDate.day != date.day ||
+                                          prevDate.month != date.month) {
                                         showDate = true;
                                       }
                                     }
 
-                                    final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
-                                    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                    final dateStr = showDate ? "${monthNames[date.month - 1]} ${date.day}\n" : "";
+                                    final timeStr =
+                                        "$hour:${date.minute.toString().padLeft(2, '0')} $amPm";
+                                    final monthNames = [
+                                      'Jan',
+                                      'Feb',
+                                      'Mar',
+                                      'Apr',
+                                      'May',
+                                      'Jun',
+                                      'Jul',
+                                      'Aug',
+                                      'Sep',
+                                      'Oct',
+                                      'Nov',
+                                      'Dec'
+                                    ];
+                                    final dateStr = showDate
+                                        ? "${monthNames[date.month - 1]} ${date.day}\n"
+                                        : "";
 
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
                                       child: Text(
                                         "$dateStr$timeStr",
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(color: Colors.grey, fontSize: 9),
+                                        style: const TextStyle(
+                                            color: Colors.grey, fontSize: 9),
                                       ),
                                     );
                                   }

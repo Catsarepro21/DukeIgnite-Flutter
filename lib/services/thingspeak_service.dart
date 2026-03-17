@@ -69,7 +69,8 @@ class ThingSpeakService {
         debugPrint('[ThingSpeakService] Successfully updated field$fieldIndex');
         return true;
       } else {
-        debugPrint('[ThingSpeakService] Update failed: HTTP ${response.statusCode}');
+        debugPrint(
+            '[ThingSpeakService] Update failed: HTTP ${response.statusCode}');
         return false;
       }
     } catch (e) {
@@ -84,16 +85,19 @@ class ThingSpeakService {
     required String channelId,
     required String userApiKey,
   }) async {
-    final uri = Uri.parse('https://api.thingspeak.com/channels/$channelId/feeds.json')
-        .replace(queryParameters: {'api_key': userApiKey});
+    final uri =
+        Uri.parse('https://api.thingspeak.com/channels/$channelId/feeds.json')
+            .replace(queryParameters: {'api_key': userApiKey});
 
     try {
       final response = await http.delete(uri);
       if (response.statusCode == 200) {
-        debugPrint('[ThingSpeakService] Successfully cleared channel $channelId');
+        debugPrint(
+            '[ThingSpeakService] Successfully cleared channel $channelId');
         return true;
       } else {
-        debugPrint('[ThingSpeakService] Clear failed: HTTP ${response.statusCode}');
+        debugPrint(
+            '[ThingSpeakService] Clear failed: HTTP ${response.statusCode}');
         return false;
       }
     } catch (e) {

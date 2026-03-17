@@ -50,7 +50,8 @@ class GeminiService {
     }
 
     if (_isInCooldown) {
-      final remains = _cooldown.inSeconds - DateTime.now().difference(_lastErrorTime!).inSeconds;
+      final remains = _cooldown.inSeconds -
+          DateTime.now().difference(_lastErrorTime!).inSeconds;
       yield "AI is cooling down from quota limits. Please wait $remains seconds.";
       return;
     }
@@ -88,8 +89,9 @@ class GeminiService {
     try {
       final encodedKey = reversedKey.split('').reversed.join('');
       final apiKey = utf8.decode(base64Decode(encodedKey));
-      
-      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
+
+      final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -107,10 +109,10 @@ class GeminiService {
   /// Returns a single, punchy safety sentence for the dashboard alert.
   /// Optimized for extreme reactivity and awareness.
   Future<String> getFlashAdvice(double ppm) async {
-    if (!_isInitialized || _model == null) return "High levels detected. Please ventilate.";
+    if (!_isInitialized || _model == null)
+      return "High levels detected. Please ventilate.";
 
-    final prompt =
-        'Reading: $ppm PPM of HCHO. '
+    final prompt = 'Reading: $ppm PPM of HCHO. '
         'Judge the danger level (WHO/OSHA). '
         'Provide ONE single, ultra-short safety command (max 8 words). '
         'If levels are > 2.0 PPM, command immediate evacuation in all caps. '

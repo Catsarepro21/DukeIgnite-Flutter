@@ -30,7 +30,7 @@ class NotificationService {
 
     if (!kIsWeb) {
       await _localNotifications.initialize(
-        initializationSettings,
+        settings: initializationSettings,
         onDidReceiveNotificationResponse: (details) {
           // Handle notification click if needed
           debugPrint("Notification clicked: ${details.payload}");
@@ -72,10 +72,10 @@ class NotificationService {
 
     if (!kIsWeb) {
       await _localNotifications.show(
-        0,
-        '⚠️ HIGH FORMALDEHYDE ALERT',
-        'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
-        platformDetails,
+        id: 0,
+        title: '⚠️ HIGH FORMALDEHYDE ALERT',
+        body: 'Level detected: ${ppm.toStringAsFixed(3)} PPM. Open a window immediately!',
+        notificationDetails: platformDetails,
         payload: 'high_ppm_alert',
       );
     }

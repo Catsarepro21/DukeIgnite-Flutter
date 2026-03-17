@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/log_service.dart';
+import '../services/thingspeak_service.dart';
 import 'dashboard_screen.dart';
 
 import 'package:provider/provider.dart';
@@ -50,7 +51,7 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
     }
   }
 
-  void _handleCommand(String input) {
+  Future<void> _handleCommand(String input) async {
     if (input.trim().isEmpty) return;
 
     final parts = input.trim().toLowerCase().split(' ');
@@ -69,6 +70,7 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
               '  - contrast <0-100>: Set LCD contrast\n'
               '  - status <on|off>: Toggle connection UI\n'
               '  - log <msg>: Print custom message\n'
+              '  - ts <ppm>: Push PPM to ThingSpeak\n'
               '  - clear: Wipe console history');
           break;
         case 'ppm':
@@ -104,6 +106,20 @@ class _DebugConsoleScreenState extends State<DebugConsoleScreen> {
             final val = parts[1] == 'on';
             sensorData.setConnectionStatus(val);
             LogService.instance.log('[Debug] Connection status set to $val');
+          }
+          break;
+        case 'ts':
+          if (parts.length > 1) {
+            final val = double.parse(parts[1]);
+            final success = await ThingSpeakService.instance.updateField(
+              writeApiKey: 'GUA6KB0HVB22T7M0',
+              value: val,
+            );
+            if (success) {
+              LogService.instance.log('[Debug] Pushed $val to ThingSpeak');
+            } else {
+              LogService.instance.log('[Error] Failed to push to ThingSpeak');
+            }
           }
           break;
         case 'log':

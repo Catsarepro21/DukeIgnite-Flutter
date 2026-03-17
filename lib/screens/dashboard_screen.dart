@@ -132,6 +132,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _showResetHistoryConfirm() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset History?'),
+        content: const Text(
+            'This will permanently clear all prior data from the ThingSpeak trend chart.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reset', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isFetchingHistory = true);
+      final success = await ThingSpeakService.instance.clearChannelFeeds(
+        channelId: '3238778',
+        userApiKey: 'GUA6KB0HVB22T7M0', // User provided this key for reset
+      );
+
+      if (success) {
+        setState(() => _history = []);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('History cleared successfully.')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Failed to clear history. Check API Key permissions.')),
+          );
+        }
+      }
+      if (mounted) {
+        setState(() => _isFetchingHistory = false);
+      }
+    }
+  }
+
   void _onDataOrConnectionChange() {
     if (!mounted || _sensorData == null) return;
 
@@ -592,18 +641,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      IconButton(
-                        icon: _isFetchingHistory
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      Row(
+                        children: [
+                          if (_history.isNotEmpty)
+                            TextButton(
+                              onPressed: _showResetHistoryConfirm,
+                              child: const Text(
+                                'Reset History',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              )
-                            : const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _fetchHistory,
+                              ),
+                            ),
+                          IconButton(
+                            icon: _isFetchingHistory
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh, color: Colors.white),
+                            onPressed: _fetchHistory,
+                          ),
+                        ],
                       ),
                     ],
                   ),
